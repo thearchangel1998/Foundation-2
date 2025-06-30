@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously } from 'firebase/auth';
+import { getAuth, signInAnonymously, signInWithCustomToken } from 'firebase/auth';
 import { 
     getFirestore,
     doc,
@@ -10,21 +10,10 @@ import {
     serverTimestamp
 } from 'firebase/firestore';
 
-// --- User's Firebase Configuration ---
-const firebaseConfig = {
-  apiKey: "AIzaSyD97r-PClXqrK7yyMWFuE5l4ZNZtANv0Tw",
-  authDomain: "foundation-196fd.firebaseapp.com",
-  projectId: "foundation-196fd",
-  storageBucket: "foundation-196fd.firebasestorage.app",
-  messagingSenderId: "684476337230",
-  appId: "1:684476337230:web:9f4e6ff1bff3a75f5b871f",
-  measurementId: "G-86H1SYPEPL"
-};
-
-// --- Firebase Initialization ---
+// --- Firebase Initialization (will be done inside the component) ---
 let app, auth, db;
-// A unique ID for this app's data in the database
-const appId = 'ipa-classroom-tool-shared';
+// Use the environment-provided app ID if available, otherwise use a default.
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-ipa-app';
 
 
 // --- Data for Activities ---
@@ -185,14 +174,18 @@ export default function App() {
     useEffect(() => {
         const init = async () => {
             try {
-                // Initialize Firebase with the provided config
-                app = initializeApp(firebaseConfig);
+                // Initialize Firebase with the globally provided config if available, otherwise use the user's config
+                const finalFirebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : firebaseConfig;
+                app = initializeApp(finalFirebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
                 
-                // When using a user-provided Firebase config, we must use anonymous sign-in.
-                // The `signInWithCustomToken` method is only for the environment's default Firebase project.
-                await signInAnonymously(auth);
+                // Use the environment-provided auth token if available, otherwise sign in anonymously
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
                 
                 setIsFirebaseReady(true);
             } catch (err) {
