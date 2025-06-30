@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPA Classroom Tool (Makeup Lesson)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .word-bank-item { touch-action: none; }
+        .drop-zone { min-height: 120px; transition: all 0.2s ease-in-out; }
+        .drag-over { border-style: dashed; border-color: #60a5fa; background-color: #eff6ff; }
+        
+        @media (min-width: 1280px) { 
+            #page-grid-container { display: grid; grid-template-columns: 1fr minmax(auto, 48rem) 1fr; gap: 2rem; align-items: start; }
+            #main-content-wrapper { grid-column: 2; }
+            #left-sidebar, #right-sidebar { position: sticky; top: 2rem; }
+            #left-sidebar { justify-self: end; }
+            #right-sidebar { justify-self: start; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 py-8">
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- Data ---
+        const soundSorterWordsData = [ { word: 'apple', type: 'vowel' }, { word: 'cat', type: 'consonant' }, { word: 'hour', type: 'vowel' }, { word: 'user', type: 'consonant' }, { word: 'egg', type: 'vowel' }, { word: 'table', type: 'consonant' }, { word: 'ice', type: 'vowel' }, { word: 'one', type: 'consonant' }, { word: 'open', type: 'vowel' }, { word: 'pen', type: 'consonant' }, { word: 'under', type: 'vowel' }, { word: 'ship', type: 'consonant' }, { word: 'honor', type: 'vowel' }, { word: 'university', type: 'consonant' }, { word: 'eagle', type: 'vowel' }, { word: 'yellow', type: 'consonant' } ];
+        const diphthongRoundsData = [ { sound: '/aɪ/', words: [ { word: 'time', correct: true }, { word: 'see', correct: false }, { word: 'light', correct: true }, { word: 'boat', correct: false }, { word: 'my', correct: true }, { word: 'go', correct: false }, { word: 'why', correct: true }, { word: 'food', correct: false }, { word: 'bike', correct: true }, { word: 'say', correct: false }, { word: 'fly', correct: true }, { word: 'meet', correct: false } ] }, { sound: '/eɪ/', words: [ { word: 'say', correct: true }, { word: 'sit', correct: false }, { word: 'wait', correct: true }, { word: 'now', correct: false }, { word: 'great', correct: true }, { word: 'lot', correct: false }, { word: 'eight', correct: true }, { word: 'boy', correct: false }, { word: 'late', correct: true }, { word: 'my', correct: false }, { word: 'train', correct: true }, { word: 'cat', correct: false } ] }, { sound: '/ɔɪ/', words: [ { word: 'boy', correct: true }, { word: 'go', correct: false }, { word: 'noise', correct: true }, { word: 'day', correct: false }, { word: 'coin', correct: true }, { word: 'see', correct: false }, { word: 'toy', correct: true }, { word: 'time', correct: false }, { word: 'voice', correct: true }, { word: 'loud', correct: false }, { word: 'boil', correct: true }, { word: 'house', correct: false } ] }, { sound: '/aʊ/', words: [ { word: 'now', correct: true }, { word: 'note', correct: false }, { word: 'house', correct: true }, { word: 'hear', correct: false }, { word: 'loud', correct: true }, { word: 'boy', correct: false }, { word: 'about', correct: true }, { word: 'bear', correct: false }, { word: 'town', correct: true }, { word: 'tour', correct: false }, { word: 'mouse', correct: true }, { word: 'more', correct: false } ] } ];
+        const minimalPairChallengesData = [ { ipa1: '/fæn/', word1: 'fan', ipa2: '/væn/', word2: 'van' }, { ipa1: '/siːt/', word1: 'seat', ipa2: '/sɪt/', word2: 'sit' }, { ipa1: '/bæk/', word1: 'back', ipa2: '/bæg/', word2: 'bag' }, { ipa1: '/θɪŋk/', word1: 'think', ipa2: '/sɪŋk/', word2: 'sink' }, { ipa1: '/laɪt/', word1: 'light', ipa2: '/raɪt/', word2: 'right' }, { ipa1: '/tʃiːp/', word1: 'cheap', ipa2: '/ʃiːp/', word2: 'sheep' }, { ipa1: '/deɪ/', word1: 'day', ipa2: '/ðeɪ/', word2: 'they' }, { ipa1: '/pleɪ/', word1: 'play', ipa2: '/preɪ/', word2: 'pray' }, ];
+        const ipaQuotesData = [ { quote: "The only thing we have to fear is fear itself.", author: "Franklin D. Roosevelt", ipa: "/ði ˈoʊnli θɪŋ wi hæv tu fɪər ɪz fɪər ɪtˈsɛlf./" }, { quote: "To be, or not to be, that is the question.", author: "William Shakespeare", ipa: "/tu bi, ɔːr nɒt tu bi, ðæt ɪz ðə ˈkwɛstʃən./" }, { quote: "I think, therefore I am.", author: "René Descartes", ipa: "/aɪ θɪŋk, ˈðɛərˌfɔːr aɪ æm./" }, { quote: "That's one small step for a man, one giant leap for mankind.", author: "Neil Armstrong", ipa: "/ðæts wʌn smɔːl stɛp fɔːr ə mæn, wʌn ˈdʒaɪənt liːp fɔːr mænˈkaɪnd./" }, { quote: "The journey of a thousand miles begins with a single step.", author: "Lao Tzu", ipa: "/ðə ˈdʒɜːrni əv ə ˈθaʊzənd maɪlz bɪˈɡɪnz wɪð ə ˈsɪŋɡəl stɛp./" }, { quote: "All that glitters is not gold.", author: "William Shakespeare", ipa: "/ɔːl ðæt ˈɡlɪtərz ɪz nɒt ɡoʊld./" } ];
+        
+        // --- Team Component ---
+        const TeamCard = ({ team, index, onScoreChange }) => {
+            return (
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 flex flex-col h-full">
+                    <h3 className="font-bold text-lg mb-2 text-gray-700">Team {index + 1}</h3>
+                    <ul className="text-sm list-disc list-inside text-gray-600 mb-4 flex-grow">
+                        {team.members.map(name => <li key={name}>{name}</li>)}
+                    </ul>
+                    <div className="mt-auto pt-2 border-t border-gray-200 flex items-center justify-center gap-4">
+                        <button onClick={() => onScoreChange(index, -1)} className="bg-red-500 text-white font-bold rounded-full w-8 h-8 flex items-center justify-center text-xl hover:bg-red-600">-</button>
+                        <span className="font-bold text-2xl text-gray-800">{team.score}</span>
+                        <button onClick={() => onScoreChange(index, 1)} className="bg-green-500 text-white font-bold rounded-full w-8 h-8 flex items-center justify-center text-xl hover:bg-green-600">+</button>
+                    </div>
+                </div>
+            );
+        };
+        const StickyTeamCard = ({ team, index, onScoreChange }) => (
+             <div className="w-64 bg-white rounded-xl shadow-lg p-4 flex flex-col">
+                <TeamCard team={team} index={index} onScoreChange={onScoreChange} />
+             </div>
+        );
+
+        // --- TeamSplitter Component ---
+        const TeamSplitter = ({ onTeamsUpdate }) => {
+            const [teamCount, setTeamCount] = useState(2);
+            const [nameInput, setNameInput] = useState('');
+
+            const splitTeams = () => {
+                const names = nameInput.split('\n').map(name => name.trim()).filter(name => name);
+                if (names.length === 0) return;
+                
+                const shuffledNames = [...names].sort(() => Math.random() - 0.5);
+                const newTeams = Array.from({ length: teamCount }, () => ({ members: [], score: 0 }));
+                shuffledNames.forEach((name, index) => newTeams[index % teamCount].members.push(name));
+                onTeamsUpdate(newTeams);
+            };
+
+            return (
+                <div className="w-full bg-white rounded-xl shadow-lg p-6 md:p-8 text-center">
+                    <h2 className="text-3xl font-bold text-gray-800 mb-2">Start Class</h2>
+                    <p className="text-gray-600 mb-6">Enter names, choose the number of teams, and click "Split Teams".</p>
+                    <textarea value={nameInput} onChange={(e) => setNameInput(e.target.value)} className="w-full h-32 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none" placeholder="Enter names, one per line..."></textarea>
+                    <div className="my-4">
+                        <span className="text-gray-700 mr-4">Number of Teams:</span>
+                        <div className="inline-flex rounded-lg shadow-sm">
+                            <button onClick={() => setTeamCount(2)} className={`px-4 py-2 text-sm font-medium border rounded-l-lg transition-colors ${teamCount === 2 ? 'bg-indigo-600 text-white' : 'bg-white text-indigo-700 hover:bg-gray-100'}`}>2 Teams</button>
+                            <button onClick={() => setTeamCount(3)} className={`px-4 py-2 text-sm font-medium border-t border-b border-r rounded-r-lg transition-colors ${teamCount === 3 ? 'bg-indigo-600 text-white' : 'bg-white text-indigo-700 hover:bg-gray-100'}`}>3 Teams</button>
+                        </div>
+                    </div>
+                    <button onClick={splitTeams} className="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-lg transition-all">Split Teams</button>
+                </div>
+            );
+        };
+        
+        // --- Activity Components ---
+        const SoundSorter = () => {
+            const [words, setWords] = useState(soundSorterWordsData.map(w => ({...w, zone: null})));
+            const handleDragStart = (e, word) => { e.dataTransfer.setData('text/plain', JSON.stringify(word)); };
+            const handleDrop = (e, targetZoneType) => { e.preventDefault(); e.currentTarget.classList.remove('drag-over'); const wordData = JSON.parse(e.dataTransfer.getData('text')); if (wordData.type === targetZoneType) { setWords(currentWords => currentWords.map(w => w.word === wordData.word ? {...w, zone: targetZoneType} : w)); }};
+            const handleDragOver = (e) => { e.preventDefault(); e.currentTarget.classList.add('drag-over'); };
+            const handleDragLeave = (e) => { e.currentTarget.classList.remove('drag-over'); };
+
+            return (
+                <div className="w-full bg-white rounded-xl shadow-lg p-6 md:p-8 text-center">
+                    <h1 className="text-2xl font-bold text-gray-800 mb-2">Activity 1: Vowel & Consonant Sorter</h1>
+                    <p className="text-gray-600 mb-6">Drag and drop the words into the correct box based on their <strong>initial sound</strong>.</p>
+                    <div className="flex flex-wrap justify-center gap-3 p-4 bg-gray-50 rounded-lg shadow-inner mb-8 min-h-[5rem]">
+                        {words.filter(w => !w.zone).map(word => (<div key={word.word} draggable onDragStart={(e) => handleDragStart(e, word)} className="word-bank-item cursor-move bg-gray-200 px-4 py-2 rounded-md shadow-sm">{word.word}</div>))}
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div onDrop={(e) => handleDrop(e, 'vowel')} onDragOver={handleDragOver} onDragLeave={handleDragLeave} className="p-6 bg-blue-100 border-2 border-blue-300 rounded-lg drop-zone">
+                            <h2 className="text-xl font-bold text-blue-800 mb-4">Starts with a Vowel Sound</h2>
+                            {words.filter(w => w.zone === 'vowel').map(w => <div key={w.word} className="bg-white px-4 py-2 rounded-md shadow-sm text-gray-800 my-1">{w.word}</div>)}
+                        </div>
+                        <div onDrop={(e) => handleDrop(e, 'consonant')} onDragOver={handleDragOver} onDragLeave={handleDragLeave} className="p-6 bg-green-100 border-2 border-green-300 rounded-lg drop-zone">
+                            <h2 className="text-xl font-bold text-green-800 mb-4">Starts with a Consonant Sound</h2>
+                            {words.filter(w => w.zone === 'consonant').map(w => <div key={w.word} className="bg-white px-4 py-2 rounded-md shadow-sm text-gray-800 my-1">{w.word}</div>)}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+        const DiphthongHunter = () => {
+            const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
+            const [isChecked, setIsChecked] = useState(false);
+            const round = diphthongRoundsData[currentRoundIndex];
+            const [wordState, setWordState] = useState([]);
+
+            useEffect(() => {
+                setWordState(round.words.map(w => ({...w, status: 'unclicked'})));
+                setIsChecked(false);
+            }, [currentRoundIndex]);
+
+            const handleClick = (clickedWord) => {
+                if(isChecked) return;
+                setWordState(prev => prev.map(w => w.word === clickedWord.word ? {...w, status: w.correct ? 'correct' : 'incorrect'} : w));
+            };
+            const handleCheck = () => setIsChecked(true);
+            const nextRound = () => setCurrentRoundIndex(prev => (prev + 1) % diphthongRoundsData.length);
+
+            return (
+                 <div className="w-full bg-white rounded-xl shadow-lg p-6 md:p-8 text-center">
+                    <h1 className="text-2xl font-bold text-gray-800 mb-2">Activity 2: Diphthong Hunter</h1>
+                    <p className="text-gray-600 mb-6">Click on all the words that contain the target sound.</p>
+                    <div className="bg-gray-50 p-6 rounded-lg shadow-inner mb-6">
+                        <h2 className="text-xl font-semibold text-gray-700">Find the sound: <span className="text-4xl font-mono text-indigo-600 ml-2">{round.sound}</span></h2>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                        {wordState.map(wordObj => {
+                            let btnClass = 'p-4 bg-white rounded-lg shadow-sm text-lg font-semibold text-gray-700 hover:bg-gray-50 transition-colors';
+                            if (wordObj.status === 'correct') {
+                                btnClass += ' bg-green-200 text-green-800';
+                            } else if (wordObj.status === 'incorrect') {
+                                btnClass += ' bg-red-200 text-red-800';
+                            } else if (isChecked && wordObj.correct) {
+                                btnClass += ' bg-yellow-200 ring-2 ring-yellow-400';
+                            }
+                            return (<button key={wordObj.word} onClick={() => handleClick(wordObj)} disabled={wordObj.status !== 'unclicked' && !isChecked} className={btnClass}>{wordObj.word}</button>);
+                        })}
+                    </div>
+                    <div className="mt-8 flex justify-center gap-4">
+                        <button onClick={handleCheck} className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-8 rounded-lg transition-all">Check Answers</button>
+                        <button onClick={nextRound} className="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg transition-all">Next Sound</button>
+                    </div>
+                </div>
+            );
+        };
+        const MinimalPairChallenge = () => {
+            const [challenge, setChallenge] = useState(minimalPairChallengesData[0]);
+            const [selected, setSelected] = useState({ ipa: null, word: null });
+            const [correctPairs, setCorrectPairs] = useState([]);
+            const [options, setOptions] = useState([]);
+
+            const loadChallenge = () => {
+                const challengeIndex = Math.floor(Math.random() * minimalPairChallengesData.length);
+                const newChallenge = minimalPairChallengesData[challengeIndex];
+                setChallenge(newChallenge);
+                setCorrectPairs([]);
+                setSelected({ ipa: null, word: null });
+                setOptions([
+                    { type: 'ipa', value: newChallenge.ipa1, partner: newChallenge.word1 }, { type: 'ipa', value: newChallenge.ipa2, partner: newChallenge.word2 },
+                    { type: 'word', value: newChallenge.word1, partner: newChallenge.ipa1 }, { type: 'word', value: newChallenge.word2, partner: newChallenge.ipa2 },
+                ].sort(() => Math.random() - 0.5));
+            };
+            
+            useEffect(loadChallenge, []);
+
+            const handleSelect = (type, value) => setSelected(prev => ({ ...prev, [type]: value }));
+            useEffect(() => {
+                if (selected.ipa && selected.word) {
+                    const isMatch = (selected.ipa === challenge.ipa1 && selected.word === challenge.word1) || (selected.ipa === challenge.ipa2 && selected.word === challenge.word2);
+                    if (isMatch) setCorrectPairs(prev => [...prev, selected.word]);
+                    setTimeout(() => setSelected({ ipa: null, word: null }), 500);
+                }
+            }, [selected, challenge]);
+
+            return (
+                <div className="w-full bg-white rounded-xl shadow-lg p-6 md:p-8 text-center">
+                    <h1 className="text-2xl font-bold text-gray-800 mb-2">Activity 3: Minimal Pair Challenge</h1>
+                    <p className="text-gray-600 mb-6">Match the phonetic transcription to the correct word.</p>
+                    <div className="p-8 rounded-lg shadow-inner bg-gray-50">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                            <div className="space-y-4">
+                                {options.filter(o => o.type === 'ipa').map(opt => <button key={opt.value} onClick={() => handleSelect('ipa', opt.value)} disabled={correctPairs.includes(opt.partner)} className={`w-full p-4 rounded-lg text-2xl shadow-sm transition-all duration-200 font-mono bg-blue-100 ${selected.ipa === opt.value ? 'ring-4 ring-indigo-400' : ''} ${correctPairs.includes(opt.partner) ? 'opacity-50' : 'hover:bg-blue-200'}`}>{opt.value}</button>)}
+                            </div>
+                            <div className="space-y-4">
+                                 {options.filter(o => o.type === 'word').map(opt => <button key={opt.value} onClick={() => handleSelect('word', opt.value)} disabled={correctPairs.includes(opt.value)} className={`w-full p-4 rounded-lg text-2xl shadow-sm transition-all duration-200 bg-green-100 ${selected.word === opt.value ? 'ring-4 ring-indigo-400' : ''} ${correctPairs.includes(opt.value) ? 'opacity-50' : 'hover:bg-green-200'}`}>{opt.value}</button>)}
+                            </div>
+                        </div>
+                        <p className={`mt-6 font-semibold text-xl h-6 ${correctPairs.length === 2 ? 'text-green-600' : ''}`}>{correctPairs.length === 2 ? 'Great Job! Round Complete!' : ''}</p>
+                    </div>
+                    <button onClick={loadChallenge} className="mt-6 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg transition-all">Next Challenge</button>
+                </div>
+            );
+        };
+        const QuoteDecoder = () => {
+            const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
+            const [showAnswer, setShowAnswer] = useState(false);
+            const quote = ipaQuotesData[currentQuoteIndex];
+
+            const nextQuote = () => {
+                setShowAnswer(false);
+                setCurrentQuoteIndex(prev => (prev + 1) % ipaQuotesData.length);
+            };
+
+            return (
+                <div className="w-full bg-white rounded-xl shadow-lg p-6 md:p-8 text-center">
+                     <h1 className="text-2xl font-bold text-gray-800 mb-2">Activity 4: IPA Quote Decoder</h1>
+                    <p className="text-gray-600 mb-6">Work together to transcribe this famous quote into English.</p>
+                    <div className="bg-gray-50 p-8 rounded-lg shadow-inner">
+                        <p className="text-2xl md:text-3xl font-mono text-cyan-700 leading-relaxed mb-6">{quote.ipa}</p>
+                        <textarea className="w-full h-24 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:outline-none" placeholder="Type your transcription here..."></textarea>
+                        {showAnswer && (
+                            <div className="mt-4 p-4 bg-gray-100 rounded-lg text-left">
+                                <p className="font-bold text-gray-800">Original Quote:</p>
+                                <p className="text-lg text-gray-700">"{quote.quote}"</p>
+                                <p className="text-md text-gray-500 italic mt-2">— {quote.author}</p>
+                            </div>
+                         )}
+                    </div>
+                    <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
+                        <button onClick={() => setShowAnswer(p => !p)} className="w-full sm:w-auto bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg transition-all">{showAnswer ? 'Hide Quote' : 'Reveal Quote'}</button>
+                        <button onClick={nextQuote} className="w-full sm:w-auto bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 px-6 rounded-lg transition-all">Next Quote</button>
+                    </div>
+                </div>
+            );
+        }
+
+        // --- Main App Component ---
+        function App() {
+            const [teams, setTeams] = useState([]);
+            const handleTeamsUpdate = (newTeams) => setTeams(newTeams);
+            const handleScoreChange = (teamIndex, delta) => {
+                setTeams(currentTeams => currentTeams.map((team, i) => i === teamIndex ? { ...team, score: Math.max(0, team.score + delta) } : team));
+            };
+            const useStickyLayout = teams.length === 2 && window.innerWidth >= 1280;
+            
+            return (
+                <div id="page-grid-container">
+                    <div id="left-sidebar">
+                        {useStickyLayout && teams[0] && <StickyTeamCard team={teams[0]} index={0} onScoreChange={handleScoreChange} />}
+                    </div>
+                    <div id="main-content-wrapper" className="w-full max-w-3xl mx-auto space-y-8">
+                         <TeamSplitter onTeamsUpdate={handleTeamsUpdate} />
+                         {!useStickyLayout && teams.length > 0 && (
+                            <div className="w-full bg-white rounded-xl shadow-lg p-6 md:p-8 text-center">
+                                <div className={`mt-6 grid grid-cols-1 ${teams.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-3'} gap-4 text-left`}>
+                                     {teams.map((team, index) => <TeamCard key={index} team={team} index={index} onScoreChange={handleScoreChange} />)}
+                                </div>
+                            </div>
+                         )}
+                        <SoundSorter />
+                        <DiphthongHunter />
+                        <MinimalPairChallenge />
+                        <QuoteDecoder />
+                    </div>
+                    <div id="right-sidebar">
+                        {useStickyLayout && teams[1] && <StickyTeamCard team={teams[1]} index={1} onScoreChange={handleScoreChange} />}
+                    </div>
+                </div>
+            );
+        }
+        
+        const container = document.getElementById('root');
+        const root = ReactDOM.createRoot(container);
+        root.render(<App />);
+    </script>
+</body>
+</html>
