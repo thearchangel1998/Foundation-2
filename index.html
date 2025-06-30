@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IPA Classroom Tool (Makeup Lesson)</title>
+    <title>Final Review IPA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -36,6 +36,18 @@
         const minimalPairChallengesData = [ { ipa1: '/fæn/', word1: 'fan', ipa2: '/væn/', word2: 'van' }, { ipa1: '/siːt/', word1: 'seat', ipa2: '/sɪt/', word2: 'sit' }, { ipa1: '/bæk/', word1: 'back', ipa2: '/bæg/', word2: 'bag' }, { ipa1: '/θɪŋk/', word1: 'think', ipa2: '/sɪŋk/', word2: 'sink' }, { ipa1: '/laɪt/', word1: 'light', ipa2: '/raɪt/', word2: 'right' }, { ipa1: '/tʃiːp/', word1: 'cheap', ipa2: '/ʃiːp/', word2: 'sheep' }, { ipa1: '/deɪ/', word1: 'day', ipa2: '/ðeɪ/', word2: 'they' }, { ipa1: '/pleɪ/', word1: 'play', ipa2: '/preɪ/', word2: 'pray' }, ];
         const ipaQuotesData = [ { quote: "The only thing we have to fear is fear itself.", author: "Franklin D. Roosevelt", ipa: "/ði ˈoʊnli θɪŋ wi hæv tu fɪər ɪz fɪər ɪtˈsɛlf./" }, { quote: "To be, or not to be, that is the question.", author: "William Shakespeare", ipa: "/tu bi, ɔːr nɒt tu bi, ðæt ɪz ðə ˈkwɛstʃən./" }, { quote: "I think, therefore I am.", author: "René Descartes", ipa: "/aɪ θɪŋk, ˈðɛərˌfɔːr aɪ æm./" }, { quote: "That's one small step for a man, one giant leap for mankind.", author: "Neil Armstrong", ipa: "/ðæts wʌn smɔːl stɛp fɔːr ə mæn, wʌn ˈdʒaɪənt liːp fɔːr mænˈkaɪnd./" }, { quote: "The journey of a thousand miles begins with a single step.", author: "Lao Tzu", ipa: "/ðə ˈdʒɜːrni əv ə ˈθaʊzənd maɪlz bɪˈɡɪnz wɪð ə ˈsɪŋɡəl stɛp./" }, { quote: "All that glitters is not gold.", author: "William Shakespeare", ipa: "/ɔːl ðæt ˈɡlɪtərz ɪz nɒt ɡoʊld./" } ];
         
+        // --- Helper Function for shuffling arrays ---
+        const shuffleArray = (array) => {
+            let currentIndex = array.length,  randomIndex;
+            const newArray = [...array]; // Create a copy to avoid mutating the original
+            while (currentIndex !== 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [newArray[currentIndex], newArray[randomIndex]] = [newArray[randomIndex], newArray[currentIndex]];
+            }
+            return newArray;
+        };
+        
         // --- Team Component ---
         const TeamCard = ({ team, index, onScoreChange }) => {
             return (
@@ -67,7 +79,7 @@
                 const names = nameInput.split('\n').map(name => name.trim()).filter(name => name);
                 if (names.length === 0) return;
                 
-                const shuffledNames = [...names].sort(() => Math.random() - 0.5);
+                const shuffledNames = shuffleArray(names);
                 const newTeams = Array.from({ length: teamCount }, () => ({ members: [], score: 0 }));
                 shuffledNames.forEach((name, index) => newTeams[index % teamCount].members.push(name));
                 onTeamsUpdate(newTeams);
@@ -125,7 +137,7 @@
             const [wordState, setWordState] = useState([]);
 
             useEffect(() => {
-                setWordState(round.words.map(w => ({...w, status: 'unclicked'})));
+                setWordState(shuffleArray(round.words).map(w => ({...w, status: 'unclicked'})));
                 setIsChecked(false);
             }, [currentRoundIndex]);
 
@@ -146,13 +158,9 @@
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                         {wordState.map(wordObj => {
                             let btnClass = 'p-4 bg-white rounded-lg shadow-sm text-lg font-semibold text-gray-700 hover:bg-gray-50 transition-colors';
-                            if (wordObj.status === 'correct') {
-                                btnClass += ' bg-green-200 text-green-800';
-                            } else if (wordObj.status === 'incorrect') {
-                                btnClass += ' bg-red-200 text-red-800';
-                            } else if (isChecked && wordObj.correct) {
-                                btnClass += ' bg-yellow-200 ring-2 ring-yellow-400';
-                            }
+                            if (wordObj.status === 'correct') { btnClass += ' bg-green-200 text-green-800'; } 
+                            else if (wordObj.status === 'incorrect') { btnClass += ' bg-red-200 text-red-800'; } 
+                            else if (isChecked && wordObj.correct) { btnClass += ' bg-yellow-200 ring-2 ring-yellow-400'; }
                             return (<button key={wordObj.word} onClick={() => handleClick(wordObj)} disabled={wordObj.status !== 'unclicked' && !isChecked} className={btnClass}>{wordObj.word}</button>);
                         })}
                     </div>
@@ -175,10 +183,11 @@
                 setChallenge(newChallenge);
                 setCorrectPairs([]);
                 setSelected({ ipa: null, word: null });
-                setOptions([
+                const newOptions = [
                     { type: 'ipa', value: newChallenge.ipa1, partner: newChallenge.word1 }, { type: 'ipa', value: newChallenge.ipa2, partner: newChallenge.word2 },
                     { type: 'word', value: newChallenge.word1, partner: newChallenge.ipa1 }, { type: 'word', value: newChallenge.word2, partner: newChallenge.ipa2 },
-                ].sort(() => Math.random() - 0.5));
+                ];
+                setOptions(shuffleArray(newOptions));
             };
             
             useEffect(loadChallenge, []);
