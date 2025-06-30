@@ -1,0 +1,388 @@
+import React, { useState, useEffect } from 'react';
+import { initializeApp } from 'firebase/app';
+import { getAuth, signInAnonymously } from 'firebase/auth';
+import { 
+    getFirestore,
+    doc,
+    setDoc,
+    onSnapshot,
+    updateDoc,
+    serverTimestamp
+} from 'firebase/firestore';
+
+// --- User's Firebase Configuration ---
+const firebaseConfig = {
+  apiKey: "AIzaSyD97r-PClXqrK7yyMWFuE5l4ZNZtANv0Tw",
+  authDomain: "foundation-196fd.firebaseapp.com",
+  projectId: "foundation-196fd",
+  storageBucket: "foundation-196fd.firebasestorage.app",
+  messagingSenderId: "684476337230",
+  appId: "1:684476337230:web:9f4e6ff1bff3a75f5b871f",
+  measurementId: "G-86H1SYPEPL"
+};
+
+// --- Firebase Initialization ---
+let app, auth, db;
+// A unique ID for this app's data in the database
+const appId = 'ipa-classroom-tool-shared';
+
+
+// --- Data for Activities ---
+const soundSorterWords = [
+    { word: 'apple', type: 'vowel' }, { word: 'cat', type: 'consonant' },
+    { word: 'hour', type: 'vowel' }, { word: 'user', type: 'consonant' },
+    { word: 'egg', type: 'vowel' }, { word: 'table', type: 'consonant' },
+    { word: 'ice', type: 'vowel' }, { word: 'one', type: 'consonant' },
+    { word: 'open', type: 'vowel' }, { word: 'pen', type: 'consonant' },
+    { word: 'under', type: 'vowel' }, { word: 'ship', type: 'consonant' },
+    { word: 'honor', type: 'vowel' }, { word: 'university', type: 'consonant' },
+    { word: 'eagle', type: 'vowel' }, { word: 'yellow', type: 'consonant' }
+];
+
+const diphthongRounds = [
+    { sound: '/aɪ/', words: [ { word: 'time', correct: true }, { word: 'see', correct: false }, { word: 'light', correct: true }, { word: 'boat', correct: false }, { word: 'my', correct: true }, { word: 'go', correct: false }, { word: 'why', correct: true }, { word: 'food', correct: false }, { word: 'bike', correct: true }, { word: 'say', correct: false }, { word: 'fly', correct: true }, { word: 'meet', correct: false } ] },
+    { sound: '/eɪ/', words: [ { word: 'say', correct: true }, { word: 'sit', correct: false }, { word: 'wait', correct: true }, { word: 'now', correct: false }, { word: 'great', correct: true }, { word: 'lot', correct: false }, { word: 'eight', correct: true }, { word: 'boy', correct: false }, { word: 'late', correct: true }, { word: 'my', correct: false }, { word: 'train', correct: true }, { word: 'cat', correct: false } ] },
+    { sound: '/ɔɪ/', words: [ { word: 'boy', correct: true }, { word: 'go', correct: false }, { word: 'noise', correct: true }, { word: 'day', correct: false }, { word: 'coin', correct: true }, { word: 'see', correct: false }, { word: 'toy', correct: true }, { word: 'time', correct: false }, { word: 'voice', correct: true }, { word: 'loud', correct: false }, { word: 'boil', correct: true }, { word: 'house', correct: false } ] },
+    { sound: '/aʊ/', words: [ { word: 'now', correct: true }, { word: 'note', correct: false }, { word: 'house', correct: true }, { word: 'hear', correct: false }, { word: 'loud', correct: true }, { word: 'boy', correct: false }, { word: 'about', correct: true }, { word: 'bear', correct: false }, { word: 'town', correct: true }, { word: 'tour', correct: false }, { word: 'mouse', correct: true }, { word: 'more', correct: false } ] }
+];
+
+const minimalPairChallenges = [
+    { ipa1: '/fæn/', word1: 'fan', ipa2: '/væn/', word2: 'van' }, { ipa1: '/siːt/', word1: 'seat', ipa2: '/sɪt/', word2: 'sit' }, { ipa1: '/bæk/', word1: 'back', ipa2: '/bæg/', word2: 'bag' }, { ipa1: '/θɪŋk/', word1: 'think', ipa2: '/sɪŋk/', word2: 'sink' }, { ipa1: '/laɪt/', word1: 'light', ipa2: '/raɪt/', word2: 'right' }, { ipa1: '/tʃiːp/', word1: 'cheap', ipa2: '/ʃiːp/', word2: 'sheep' }, { ipa1: '/deɪ/', word1: 'day', ipa2: '/ðeɪ/', word2: 'they' }, { ipa1: '/pleɪ/', word1: 'play', ipa2: '/preɪ/', word2: 'pray' },
+];
+
+const ipaQuotes = [
+    { quote: "The only thing we have to fear is fear itself.", author: "Franklin D. Roosevelt", ipa: "/ði ˈoʊnli θɪŋ wi hæv tu fɪər ɪz fɪər ɪtˈsɛlf./" }, { quote: "To be, or not to be, that is the question.", author: "William Shakespeare", ipa: "/tu bi, ɔːr nɒt tu bi, ðæt ɪz ðə ˈkwɛstʃən./" }, { quote: "I think, therefore I am.", author: "René Descartes", ipa: "/aɪ θɪŋk, ˈðɛərˌfɔːr aɪ æm./" }, { quote: "That's one small step for a man, one giant leap for mankind.", author: "Neil Armstrong", ipa: "/ðæts wʌn smɔːl stɛp fɔːr ə mæn, wʌn ˈdʒaɪənt liːp fɔːr mænˈkaɪnd./" }, { quote: "The journey of a thousand miles begins with a single step.", author: "Lao Tzu", ipa: "/ðə ˈdʒɜːrni əv ə ˈθaʊzənd maɪlz bɪˈɡɪnz wɪð ə ˈsɪŋɡəl stɛp./" }
+];
+
+const activities = [
+    { id: 'sorter', name: 'Sound Sorter' },
+    { id: 'hunter', name: 'Diphthong Hunter' },
+    { id: 'challenge', name: 'Minimal Pair Challenge' },
+    { id: 'decoder', name: 'Quote Decoder' }
+];
+
+// --- Helper Functions ---
+const generateSessionId = () => Math.random().toString(36).substring(2, 8).toUpperCase();
+
+// --- Activity Components (Student View) ---
+const SoundSorter = ({ words }) => {
+    const [droppedWords, setDroppedWords] = useState({});
+    const handleDragStart = (e, word) => { e.dataTransfer.setData('text/plain', JSON.stringify(word)); };
+    const handleDrop = (e, targetZoneType) => {
+        e.preventDefault();
+        const wordData = JSON.parse(e.dataTransfer.getData('text'));
+        if (wordData.type === targetZoneType) { setDroppedWords(prev => ({...prev, [wordData.word]: targetZoneType })); }
+    };
+    const handleDragOver = (e) => e.preventDefault();
+    const wordBankWords = words.filter(w => !droppedWords[w.word]);
+    const vowelWords = words.filter(w => droppedWords[w.word] === 'vowel');
+    const consonantWords = words.filter(w => droppedWords[w.word] === 'consonant');
+    return (
+        <div className="text-center">
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">Sound Sorter</h1>
+            <p className="text-gray-600 mb-6">Drag words to the correct box based on their <strong>initial sound</strong>.</p>
+            <div className="flex flex-wrap justify-center gap-3 p-4 bg-white rounded-lg shadow-md mb-8 min-h-[6rem]">
+                {wordBankWords.map(word => (<div key={word.word} draggable onDragStart={(e) => handleDragStart(e, word)} className="cursor-move bg-gray-200 px-4 py-2 rounded-md shadow-sm">{word.word}</div>))}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div onDrop={(e) => handleDrop(e, 'vowel')} onDragOver={handleDragOver} className="p-6 bg-blue-100 border-2 border-dashed border-blue-300 rounded-lg min-h-[150px]">
+                    <h2 className="text-2xl font-bold text-blue-800 mb-4">Starts with a Vowel Sound</h2>
+                    {vowelWords.map(w => <div key={w.word} className="bg-white px-4 py-2 rounded-md shadow-sm text-gray-800 my-1">{w.word}</div>)}
+                </div>
+                <div onDrop={(e) => handleDrop(e, 'consonant')} onDragOver={handleDragOver} className="p-6 bg-green-100 border-2 border-dashed border-green-300 rounded-lg min-h-[150px]">
+                    <h2 className="text-2xl font-bold text-green-800 mb-4">Starts with a Consonant Sound</h2>
+                    {consonantWords.map(w => <div key={w.word} className="bg-white px-4 py-2 rounded-md shadow-sm text-gray-800 my-1">{w.word}</div>)}
+                </div>
+            </div>
+        </div>
+    );
+};
+const DiphthongHunter = ({ round }) => {
+    if (!round) return <p>Loading round...</p>;
+    const handleClick = (e, isCorrect) => {
+        e.target.disabled = true;
+        e.target.classList.remove('bg-white', 'hover:bg-gray-50');
+        e.target.classList.add(isCorrect ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800');
+    };
+    return (
+        <div className="text-center">
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">Diphthong Hunter</h1>
+            <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+                <h2 className="text-xl font-semibold text-gray-700">Find the sound: <span className="text-4xl font-mono text-indigo-600 ml-2">{round.sound}</span></h2>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {round.words.map(wordObj => (<button key={wordObj.word} onClick={(e) => handleClick(e, wordObj.correct)} className="p-4 bg-white rounded-lg shadow-sm text-lg font-semibold text-gray-700 hover:bg-gray-50 transition-colors">{wordObj.word}</button>))}
+            </div>
+        </div>
+    );
+};
+const MinimalPairChallenge = ({ challenge }) => {
+    const [selected, setSelected] = useState({ ipa: null, word: null });
+    const [correctPairs, setCorrectPairs] = useState([]);
+    if (!challenge) return <p>Loading challenge...</p>;
+
+    useEffect(() => {
+        setCorrectPairs([]);
+    }, [challenge]);
+
+    const handleSelect = (type, value) => { setSelected(prev => ({ ...prev, [type]: value })); };
+    useEffect(() => {
+        if (selected.ipa && selected.word) {
+            const isMatch = (selected.ipa === challenge.ipa1 && selected.word === challenge.word1) || (selected.ipa === challenge.ipa2 && selected.word === challenge.word2);
+            if (isMatch) { setCorrectPairs(prev => [...prev, selected.word]); }
+            setTimeout(() => setSelected({ ipa: null, word: null }), 500);
+        }
+    }, [selected, challenge]);
+    const isCorrect = (word) => correctPairs.includes(word);
+    const options = [
+        { type: 'ipa', value: challenge.ipa1, partner: challenge.word1 }, { type: 'ipa', value: challenge.ipa2, partner: challenge.word2 },
+        { type: 'word', value: challenge.word1, partner: challenge.ipa1 }, { type: 'word', value: challenge.word2, partner: challenge.ipa2 },
+    ].sort(() => Math.random() - 0.5);
+    return (
+        <div className="text-center">
+             <h1 className="text-3xl font-bold text-gray-800 mb-2">Minimal Pair Challenge</h1>
+             <p className="text-gray-600 mb-6">Match the phonetic transcription to the correct word.</p>
+             <div className="grid grid-cols-2 gap-4">
+                 {options.map(opt => (
+                     <button key={opt.value} onClick={() => handleSelect(opt.type, opt.value)} disabled={isCorrect(opt.type === 'word' ? opt.value : opt.partner)}
+                         className={`p-4 rounded-lg text-xl shadow-sm transition-all duration-200 ${opt.type === 'ipa' ? 'font-mono bg-blue-100' : 'bg-green-100'} ${selected[opt.type] === opt.value ? 'ring-4 ring-indigo-400' : ''} ${isCorrect(opt.type === 'word' ? opt.value : opt.partner) ? 'bg-gray-300 opacity-50' : 'hover:opacity-80'}`}>
+                         {opt.value}
+                     </button>
+                 ))}
+             </div>
+        </div>
+    );
+};
+const QuoteDecoder = ({ quote, showAnswer }) => {
+    if (!quote) return <p>Loading quote...</p>;
+    return (
+        <div className="text-center">
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">Quote Decoder</h1>
+            <p className="text-gray-600 mb-6">Transcribe this famous quote into English.</p>
+            <div className="bg-white p-8 rounded-lg shadow-md">
+                <p className="text-2xl md:text-3xl font-mono text-cyan-700 leading-relaxed mb-6">{quote.ipa}</p>
+                 {showAnswer && (
+                    <div className="mt-4 p-4 bg-gray-100 rounded-lg text-left">
+                        <p className="font-bold text-gray-800">Original Quote:</p>
+                        <p className="text-lg text-gray-700">"{quote.quote}"</p>
+                        <p className="text-md text-gray-500 italic mt-2">— {quote.author}</p>
+                    </div>
+                 )}
+            </div>
+        </div>
+    );
+}
+
+// --- Main App Component ---
+export default function App() {
+    const [session, setSession] = useState(null);
+    const [sessionId, setSessionId] = useState('');
+    const [isHost, setIsHost] = useState(false);
+    const [error, setError] = useState('');
+    const [nameInput, setNameInput] = useState('');
+    const [isFirebaseReady, setIsFirebaseReady] = useState(false);
+
+    useEffect(() => {
+        const init = async () => {
+            try {
+                // Initialize Firebase with the provided config
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                
+                // When using a user-provided Firebase config, we must use anonymous sign-in.
+                // The `signInWithCustomToken` method is only for the environment's default Firebase project.
+                await signInAnonymously(auth);
+                
+                setIsFirebaseReady(true);
+            } catch (err) {
+                console.error("Firebase Initialization Error:", err);
+                setError("Could not connect to the session service. Please check the Firebase configuration. " + err.message);
+            }
+        };
+        init();
+    }, []);
+
+    useEffect(() => {
+        if (!sessionId || !isFirebaseReady) return;
+        
+        // Corrected Firestore path for public data
+        const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'ipa-sessions', sessionId);
+        const unsubscribe = onSnapshot(docRef, (docSnap) => {
+            if (docSnap.exists()) {
+                setError('');
+                setSession(docSnap.data());
+            } else {
+                setError("Session not found.");
+                setSessionId('');
+                setSession(null);
+            }
+        }, (err) => {
+            console.error("Snapshot error:", err);
+            setError("Error connecting to the session.");
+        });
+
+        return () => unsubscribe();
+    }, [sessionId, isFirebaseReady]);
+
+    const handleHostGame = async () => {
+        const newSessionId = generateSessionId();
+        // Corrected Firestore path for public data
+        const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'ipa-sessions', newSessionId);
+        const initialSession = {
+            hostId: auth.currentUser.uid,
+            createdAt: serverTimestamp(),
+            currentActivity: 0,
+            activityState: { subIndex: 0, showAnswer: false },
+            teams: []
+        };
+        try {
+            await setDoc(docRef, initialSession);
+            setIsHost(true);
+            setSessionId(newSessionId);
+        } catch (err) {
+            setError("Could not create session: " + err.message);
+        }
+    };
+
+    const handleJoinGame = () => {
+        if (sessionId.trim()) { setIsHost(false); } 
+        else { setError("Please enter a Session ID."); }
+    };
+    
+    const updateSessionState = async (newState) => {
+        // Corrected Firestore path for public data
+        const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'ipa-sessions', sessionId);
+        await updateDoc(docRef, newState);
+    };
+    const handleNextActivity = () => updateSessionState({ currentActivity: (session.currentActivity + 1) % activities.length, activityState: { subIndex: 0, showAnswer: false } });
+    const handlePrevActivity = () => updateSessionState({ currentActivity: (session.currentActivity - 1 + activities.length) % activities.length, activityState: { subIndex: 0, showAnswer: false } });
+    const handleNextSubItem = () => updateSessionState({ 'activityState.subIndex': session.activityState.subIndex + 1, 'activityState.showAnswer': false });
+    const handleToggleAnswer = () => updateSessionState({ 'activityState.showAnswer': !session.activityState.showAnswer });
+    
+    const handleSplitTeams = (numTeams) => {
+        const names = nameInput.split('\n').map(name => name.trim()).filter(name => name);
+        const shuffledNames = names.sort(() => Math.random() - 0.5);
+        const newTeams = Array.from({ length: numTeams }, () => ({ members: [], score: 0 }));
+        shuffledNames.forEach((name, index) => { newTeams[index % numTeams].members.push(name); });
+        updateSessionState({ teams: newTeams });
+    };
+    
+    const handleScoreChange = (teamIndex, delta) => {
+        const newTeams = [...session.teams];
+        newTeams[teamIndex].score += delta;
+        updateSessionState({ teams: newTeams });
+    };
+
+    if (!isFirebaseReady) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
+                <div className="text-center">
+                    <h1 className="text-2xl font-bold mb-4">Connecting...</h1>
+                    <p className="text-gray-600">Please wait while we connect to the session service.</p>
+                    {error && <p className="text-red-500 mt-4 bg-red-100 p-3 rounded-lg">{error}</p>}
+                </div>
+            </div>
+        );
+    }
+    
+    if (!session) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-gray-100">
+                <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg text-center">
+                    <h1 className="text-4xl font-bold text-gray-800">IPA Classroom</h1>
+                    <p className="text-gray-600">Interactive activities for your IPA lesson!</p>
+                    <div className="space-y-4">
+                        <button onClick={handleHostGame} className="w-full px-4 py-3 font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors">Host Game</button>
+                        <div className="flex items-center space-x-2">
+                             <input type="text" value={sessionId} onChange={(e) => setSessionId(e.target.value.toUpperCase())} placeholder="Session ID" className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                             <button onClick={handleJoinGame} className="px-4 py-3 font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors">Join</button>
+                        </div>
+                    </div>
+                    {error && <p className="text-red-500 mt-4">{error}</p>}
+                </div>
+            </div>
+        );
+    }
+    
+    const currentActivityId = activities[session.currentActivity].id;
+    
+    if (isHost) {
+        return (
+            <div className="p-4 md:p-8">
+                <div className="max-w-4xl mx-auto">
+                    <div className="p-6 bg-white rounded-xl shadow-lg mb-8">
+                         <div className="flex justify-between items-center">
+                            <h1 className="text-3xl font-bold text-gray-800">Host Dashboard</h1>
+                            <div>
+                                <span className="text-gray-600">Session ID: </span>
+                                <span className="font-mono text-2xl font-bold text-indigo-600 p-2 bg-indigo-100 rounded">{sessionId}</span>
+                            </div>
+                         </div>
+                    </div>
+                    <div className="p-6 bg-white rounded-xl shadow-lg mb-8">
+                         <h2 className="text-2xl font-bold text-gray-700 mb-4">Teams & Scoring</h2>
+                         <div className="grid md:grid-cols-2 gap-4 mb-4">
+                             <textarea value={nameInput} onChange={(e) => setNameInput(e.target.value)} className="w-full h-32 p-3 border border-gray-300 rounded-lg" placeholder="Enter student names, one per line..." />
+                             <div className="flex flex-col space-y-2">
+                                 <button onClick={() => handleSplitTeams(2)} className="w-full px-4 py-2 font-semibold text-white bg-blue-500 rounded-lg hover:bg-blue-600">Split into 2 Teams</button>
+                                 <button onClick={() => handleSplitTeams(3)} className="w-full px-4 py-2 font-semibold text-white bg-blue-500 rounded-lg hover:bg-blue-600">Split into 3 Teams</button>
+                             </div>
+                         </div>
+                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                             {session.teams.map((team, index) => (
+                                 <div key={index} className="p-4 bg-gray-50 rounded-lg border">
+                                     <h3 className="font-bold text-lg">Team {index + 1}</h3>
+                                     <ul className="text-sm list-disc list-inside my-2">{team.members.map(m => <li key={m}>{m}</li>)}</ul>
+                                     <div className="flex items-center justify-center gap-4 mt-2">
+                                         <button onClick={() => handleScoreChange(index, -1)} className="bg-red-500 text-white font-bold rounded-full w-8 h-8 flex items-center justify-center text-xl hover:bg-red-600">-</button>
+                                         <span className="font-bold text-2xl">{team.score}</span>
+                                         <button onClick={() => handleScoreChange(index, 1)} className="bg-green-500 text-white font-bold rounded-full w-8 h-8 flex items-center justify-center text-xl hover:bg-green-600">+</button>
+                                     </div>
+                                 </div>
+                             ))}
+                         </div>
+                    </div>
+
+                    <div className="p-6 bg-white rounded-xl shadow-lg mb-8 text-center">
+                        <h2 className="text-2xl font-bold text-gray-700 mb-4">Activity Control</h2>
+                        <div className="flex items-center justify-between mb-4">
+                            <button onClick={handlePrevActivity} className="px-4 py-2 font-semibold bg-gray-200 rounded-lg hover:bg-gray-300">Previous</button>
+                            <span className="text-xl font-bold text-indigo-600">{activities[session.currentActivity].name}</span>
+                            <button onClick={handleNextActivity} className="px-4 py-2 font-semibold bg-gray-200 rounded-lg hover:bg-gray-300">Next</button>
+                        </div>
+                        {currentActivityId !== 'sorter' && (<div className="flex items-center justify-center gap-4">
+                                <button onClick={handleNextSubItem} className="px-4 py-2 font-semibold text-white bg-indigo-500 rounded-lg hover:bg-indigo-600">Next Item</button>
+                                {(currentActivityId === 'challenge' || currentActivityId === 'decoder') &&
+                                <button onClick={handleToggleAnswer} className="px-4 py-2 font-semibold text-white bg-gray-500 rounded-lg hover:bg-gray-600">{session.activityState.showAnswer ? 'Hide Answer' : 'Show Answer'}</button>}
+                            </div>)}
+                    </div>
+                    <div className="p-6 bg-white rounded-xl shadow-lg">
+                        <h2 className="text-2xl font-bold text-gray-700 mb-4 text-center">Current Activity Preview</h2>
+                        {currentActivityId === 'sorter' && <SoundSorter words={soundSorterWords} />}
+                        {currentActivityId === 'hunter' && <DiphthongHunter round={diphthongRounds[session.activityState.subIndex % diphthongRounds.length]} />}
+                        {currentActivityId === 'challenge' && <MinimalPairChallenge challenge={minimalPairChallenges[session.activityState.subIndex % minimalPairChallenges.length]} />}
+                        {currentActivityId === 'decoder' && <QuoteDecoder quote={ipaQuotes[session.activityState.subIndex % ipaQuotes.length]} showAnswer={session.activityState.showAnswer} />}
+                    </div>
+                </div>
+            </div>
+        )
+    }
+    
+    return (
+        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
+             <div className="w-full max-w-4xl p-6 bg-white rounded-xl shadow-lg">
+                <div className="flex justify-between items-start mb-4">
+                    <div><h1 className="text-2xl font-bold text-indigo-600">{activities[session.currentActivity].name}</h1></div>
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                         {session.teams.map((team, index) => (<div key={index} className="p-2 bg-gray-100 rounded"><div className="text-xs font-bold">Team {index+1}</div><div className="text-lg font-bold">{team.score}</div></div>))}
+                    </div>
+                </div>
+                {currentActivityId === 'sorter' && <SoundSorter words={soundSorterWords} />}
+                {currentActivityId === 'hunter' && <DiphthongHunter round={diphthongRounds[session.activityState.subIndex % diphthongRounds.length]} />}
+                {currentActivityId === 'challenge' && <MinimalPairChallenge challenge={minimalPairChallenges[session.activityState.subIndex % minimalPairChallenges.length]} />}
+                {currentActivityId === 'decoder' && <QuoteDecoder quote={ipaQuotes[session.activityState.subIndex % ipaQuotes.length]} showAnswer={session.activityState.showAnswer} />}
+             </div>
+        </div>
+    )
+}
