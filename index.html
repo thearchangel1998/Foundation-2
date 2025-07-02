@@ -33,7 +33,8 @@
         const minimalPairSetB = [ { ipa: '/væn/', word: 'van' }, { ipa: '/sɪt/', word: 'sit' }, { ipa: '/bæg/', word: 'bag' }, { ipa: '/sɪŋk/', word: 'sink' }, { ipa: '/raɪt/', word: 'right' }, { ipa: '/ʃiːp/', word: 'sheep' } ];
         const ipaQuotesData = [ { quote: "The only thing we have to fear is fear itself.", author: "Franklin D. Roosevelt", ipa: "/ði ˈoʊnli θɪŋ wi hæv tu fɪər ɪz fɪər ɪtˈsɛlf./" }, { quote: "To be, or not to be, that is the question.", author: "William Shakespeare", ipa: "/tu bi, ɔːr nɒt tu bi, ðæt ɪz ðə ˈkwɛstʃən./" }, { quote: "I think, therefore I am.", author: "René Descartes", ipa: "/aɪ θɪŋk, ˈðɛərˌfɔːr aɪ æm./" }, { quote: "That's one small step for a man, one giant leap for mankind.", author: "Neil Armstrong", ipa: "/ðæts wʌn smɔːl stɛp fɔːr ə mæn, wʌn ˈdʒaɪənt liːp fɔːr mænˈkaɪnd./" }, { quote: "The journey of a thousand miles begins with a single step.", author: "Lao Tzu", ipa: "/ðə ˈdʒɜːrni əv ə ˈθaʊzənd maɪlz bɪˈɡɪnz wɪð ə ˈsɪŋɡəl stɛp./" }, { quote: "All that glitters is not gold.", author: "William Shakespeare", ipa: "/ɔːl ðæt ˈɡlɪtərz ɪz nɒt ɡoʊld./" } ];
         const oddOneOutData = [ { words: ['seat', 'beat', 'feet', 'sit'], odd: 'sit', reason: 'Has the short vowel /ɪ/, while the others have the long vowel /i:/.' }, { words: ['say', 'make', 'late', 'cat'], odd: 'cat', reason: 'Has the vowel /æ/, while the others have the diphthong /eɪ/.' }, { words: ['back', 'lap', 'race', 'bag'], odd: 'bag', reason: 'Ends with a voiced consonant /g/, while the others end with voiceless consonants.' }, { words: ['fan', 'very', 'vine', 'voice'], odd: 'fan', reason: 'Starts with a voiceless consonant /f/, while the others start with the voiced /v/.' }, { words: ['cut', 'sun', 'luck', 'put'], odd: 'put', reason: 'Has the vowel /ʊ/, while the others have the vowel /ʌ/.' }, { words: ['hour', 'honor', 'heir', 'horse'], odd: 'horse', reason: 'The initial /h/ is pronounced, unlike in the other words.' }, { words: ['three', 'through', 'think', 'this'], odd: 'this', reason: 'Starts with a voiced /ð/ sound, while the others start with the voiceless /θ/.' }, { words: ['food', 'blue', 'shoe', 'good'], odd: 'good', reason: 'Has the short vowel /ʊ/, while the others have the long vowel /u:/.' } ];
-        
+        const findTheMistakeData = [ { word: 'sheep', mistake: '/ʃɪp/', incorrectSymbol: 'ɪ', correctIpa: '/ʃiːp/' }, { word: 'think', mistake: '/sɪŋk/', incorrectSymbol: 's', correctIpa: '/θɪŋk/' }, { word: 'bag', mistake: '/bæk/', incorrectSymbol: 'k', correctIpa: '/bæg/' }, { word: 'very', mistake: '/ˈfɛri/', incorrectSymbol: 'f', correctIpa: '/ˈvɛri/' }, { word: 'they', mistake: '/deɪ/', incorrectSymbol: 'd', correctIpa: '/ðeɪ/' }, { word: 'pleasure', mistake: '/ˈplɛʃər/', incorrectSymbol: 'ʃ', correctIpa: '/ˈplɛʒər/' }, { word: 'church', mistake: '/ʃɜːrtʃ/', incorrectSymbol: 'ʃ', correctIpa: '/tʃɜːrtʃ/' }, { word: 'juice', mistake: '/ʒuːs/', incorrectSymbol: 'ʒ', correctIpa: '/dʒuːs/' } ];
+
         const shuffleArray = (array) => { let c = array.length; while (c > 0) { let i = Math.floor(Math.random() * c); c--; [array[c], array[i]] = [array[i], array[c]]; } return array; };
         
         const TeamCard = ({ team, index, onScoreChange }) => (
@@ -117,7 +118,6 @@
                 if (activeTeam && correctGuesses === totalCorrectNeeded) {
                     setIsTimerActive(false);
                     setTimes(prev => ({...prev, [activeTeam]: timer }));
-                    setActiveTeam(null);
                 }
             }, [guessed, activeTeam]);
 
@@ -266,7 +266,7 @@
         const QuoteDecoder = () => {
             const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
             const [userInput, setUserInput] = useState('');
-            const [result, setResult] = useState(null); // null, 'correct', 'incorrect'
+            const [result, setResult] = useState(null);
             const [activeTeam, setActiveTeam] = useState(null);
             const [timer, setTimer] = useState(0);
             const [isTimerActive, setIsTimerActive] = useState(false);
@@ -274,42 +274,17 @@
             const timerRef = useRef(null);
             const quote = ipaQuotesData[currentQuoteIndex];
 
-            useEffect(() => {
-                if (isTimerActive) { timerRef.current = setInterval(() => setTimer(prev => prev + 1), 1000); } 
-                else { clearInterval(timerRef.current); }
-                return () => clearInterval(timerRef.current);
-            }, [isTimerActive]);
+            useEffect(() => { if (isTimerActive) { timerRef.current = setInterval(() => setTimer(prev => prev + 1), 1000); } else { clearInterval(timerRef.current); } return () => clearInterval(timerRef.current); }, [isTimerActive]);
 
-            const startForTeam = (teamNumber) => {
-                setUserInput('');
-                setResult(null);
-                setTimer(0);
-                setActiveTeam(teamNumber);
-                setIsTimerActive(true);
-            };
-
+            const startForTeam = (teamNumber) => { setUserInput(''); setResult(null); setTimer(0); setActiveTeam(teamNumber); setIsTimerActive(true); };
             const checkAnswer = () => {
                 if (!isTimerActive) return;
                 const cleanOriginal = quote.quote.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
                 const cleanUser = userInput.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
-                if (cleanOriginal === cleanUser) {
-                    setIsTimerActive(false);
-                    setTimes(prev => ({...prev, [activeTeam]: timer }));
-                    setResult('correct');
-                } else {
-                    setResult('incorrect');
-                }
+                if (cleanOriginal === cleanUser) { setIsTimerActive(false); setTimes(prev => ({...prev, [activeTeam]: timer })); setResult('correct'); } 
+                else { setResult('incorrect'); }
             };
-            
-            const nextQuote = () => {
-                setCurrentQuoteIndex(prev => (prev + 1) % ipaQuotesData.length);
-                setUserInput('');
-                setResult(null);
-                setActiveTeam(null);
-                setTimer(0);
-                setIsTimerActive(false);
-                setTimes({ 1: null, 2: null });
-            };
+            const nextQuote = () => { setCurrentQuoteIndex(prev => (prev + 1) % ipaQuotesData.length); setUserInput(''); setResult(null); setActiveTeam(null); setTimer(0); setIsTimerActive(false); setTimes({ 1: null, 2: null }); };
 
             return (
                 <div className="w-full bg-white rounded-xl shadow-lg p-6 md:p-8 text-center">
@@ -340,14 +315,7 @@
             const [times, setTimes] = useState({ 1: null, 2: null });
             const timerRef = useRef(null);
 
-            useEffect(() => {
-                if (isTimerActive) {
-                    timerRef.current = setInterval(() => setTimer(prev => prev + 1), 1000);
-                } else {
-                    clearInterval(timerRef.current);
-                }
-                return () => clearInterval(timerRef.current);
-            }, [isTimerActive]);
+            useEffect(() => { if (isTimerActive) { timerRef.current = setInterval(() => setTimer(prev => prev + 1), 1000); } else { clearInterval(timerRef.current); } return () => clearInterval(timerRef.current); }, [isTimerActive]);
 
             const startForTeam = (teamNumber) => {
                 setQuestions(shuffleArray(oddOneOutData));
@@ -378,13 +346,9 @@
                 }
             };
 
-            useEffect(() => {
-                setQuestions(shuffleArray(oddOneOutData));
-            }, []);
+            useEffect(() => { setQuestions(shuffleArray(oddOneOutData)); }, []);
 
-            if (questions.length === 0) {
-                return <div className="w-full bg-white rounded-xl shadow-lg p-6 md:p-8 text-center"><p>Loading...</p></div>;
-            }
+            if (questions.length === 0) return <div className="w-full bg-white rounded-xl shadow-lg p-6 md:p-8 text-center"><p>Loading...</p></div>;
             const currentQuestion = questions[currentQuestionIndex];
 
             return (
@@ -396,16 +360,10 @@
                         {currentQuestion.words.map(word => {
                             let btnClass = "p-4 text-xl font-semibold rounded-lg shadow-sm transition-colors ";
                             if (isAnswered) {
-                                if (word === currentQuestion.odd) {
-                                    btnClass += "bg-green-200 text-green-800 ring-2 ring-green-500";
-                                } else if (word === selection.word && !selection.isCorrect) {
-                                    btnClass += "bg-red-200 text-red-800";
-                                } else {
-                                    btnClass += "bg-gray-100 text-gray-500";
-                                }
-                            } else {
-                                btnClass += "bg-white hover:bg-gray-100";
-                            }
+                                if (word === currentQuestion.odd) { btnClass += "bg-green-200 text-green-800 ring-2 ring-green-500"; } 
+                                else if (word === selection.word && !selection.isCorrect) { btnClass += "bg-red-200 text-red-800"; } 
+                                else { btnClass += "bg-gray-100 text-gray-500"; }
+                            } else { btnClass += "bg-white hover:bg-gray-100"; }
                             return <button key={word} onClick={() => handleSelect(word)} disabled={isAnswered} className={btnClass}>{word}</button>
                         })}
                     </div>
@@ -415,6 +373,87 @@
                             <p className="text-gray-700">The odd one out is <strong>{currentQuestion.odd}</strong>. {currentQuestion.reason}</p>
                         </div>
                     )}
+                    <button onClick={nextQuestion} disabled={!isAnswered} className="mt-6 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg transition-all disabled:bg-gray-300">
+                        {currentQuestionIndex === questions.length - 1 ? 'Finish Round' : 'Next Question'}
+                    </button>
+                </div>
+            );
+        };
+        const FindTheMistakeGame = () => {
+            const [questions, setQuestions] = useState([]);
+            const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+            const [isAnswered, setIsAnswered] = useState(false);
+            const [selection, setSelection] = useState(null);
+            const [activeTeam, setActiveTeam] = useState(null);
+            const [timer, setTimer] = useState(0);
+            const [isTimerActive, setIsTimerActive] = useState(false);
+            const [times, setTimes] = useState({ 1: null, 2: null });
+            const timerRef = useRef(null);
+
+            useEffect(() => { if (isTimerActive) { timerRef.current = setInterval(() => setTimer(prev => prev + 1), 1000); } else { clearInterval(timerRef.current); } return () => clearInterval(timerRef.current); }, [isTimerActive]);
+
+            const startForTeam = (teamNumber) => {
+                setQuestions(shuffleArray(findTheMistakeData));
+                setCurrentQuestionIndex(0);
+                setIsAnswered(false);
+                setSelection(null);
+                setTimer(0);
+                setActiveTeam(teamNumber);
+                setIsTimerActive(true);
+            };
+
+            const handleSymbolClick = (symbol) => {
+                if (isAnswered || !isTimerActive) return;
+                const isCorrect = symbol === questions[currentQuestionIndex].incorrectSymbol;
+                setSelection({ symbol, isCorrect });
+                setIsAnswered(true);
+            };
+
+            const nextQuestion = () => {
+                if (currentQuestionIndex === questions.length - 1) {
+                    setIsTimerActive(false);
+                    setTimes(prev => ({...prev, [activeTeam]: timer }));
+                    setActiveTeam(null);
+                } else {
+                    setCurrentQuestionIndex(prev => prev + 1);
+                    setIsAnswered(false);
+                    setSelection(null);
+                }
+            };
+
+            useEffect(() => { setQuestions(shuffleArray(findTheMistakeData)); }, []);
+
+            if (questions.length === 0) return null;
+            const currentQuestion = questions[currentQuestionIndex];
+
+            return (
+                <div className="w-full bg-white rounded-xl shadow-lg p-6 md:p-8 text-center">
+                    <h1 className="text-2xl font-bold text-gray-800 mb-2">Activity 6: Find the Mistake</h1>
+                    <p className="text-gray-600 mb-6">Find and click the incorrect symbol in the phonetic transcription.</p>
+                    <TimerControls onStart={startForTeam} times={times} activeTeam={activeTeam} />
+                    <div className={`p-8 rounded-lg shadow-inner bg-gray-50 ${!activeTeam ? 'opacity-50 pointer-events-none' : ''}`}>
+                        <p className="text-3xl font-bold mb-4">{currentQuestion.word}</p>
+                        <div className="flex justify-center items-center text-3xl font-mono text-cyan-700">
+                            <span>/</span>
+                            {currentQuestion.mistake.replace(/[/\s]/g, '').split('').map((symbol, i) => {
+                                let symbolClass = "cursor-pointer hover:bg-yellow-200 rounded px-1";
+                                if (isAnswered) {
+                                    if (symbol === currentQuestion.incorrectSymbol) {
+                                        symbolClass += " bg-green-200 ring-2 ring-green-500";
+                                    } else if (selection && symbol === selection.symbol && !selection.isCorrect) {
+                                        symbolClass += " bg-red-200";
+                                    }
+                                }
+                                return <span key={i} onClick={() => handleSymbolClick(symbol)} className={symbolClass}>{symbol}</span>;
+                            })}
+                            <span>/</span>
+                        </div>
+                        {isAnswered && (
+                            <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                                <p className="text-gray-700">The incorrect symbol was <strong>/{currentQuestion.incorrectSymbol}/</strong>. The correct transcription is <strong>{currentQuestion.correctIpa}</strong>.</p>
+                            </div>
+                        )}
+                    </div>
                     <button onClick={nextQuestion} disabled={!isAnswered} className="mt-6 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg transition-all disabled:bg-gray-300">
                         {currentQuestionIndex === questions.length - 1 ? 'Finish Round' : 'Next Question'}
                     </button>
@@ -443,6 +482,7 @@
                         <MinimalPairMemoryGame />
                         <QuoteDecoder />
                         <OddOneOutGame />
+                        <FindTheMistakeGame />
                     </div>
                     <div id="right-sidebar">{useStickyLayout && teams[1] && <StickyTeamCard team={teams[1]} index={1} onScoreChange={handleScoreChange} />}</div>
                 </div>
