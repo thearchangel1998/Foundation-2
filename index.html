@@ -82,7 +82,7 @@
                     </div>
                 </div>
                 <div className="mt-4 flex justify-center gap-4">
-                    {children ? children(activeTeam) : (
+                    {children ? children(activeTeam, onStart) : (
                         <>
                             <button onClick={() => onStart(1)} disabled={activeTeam !== null} className="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg disabled:bg-gray-400">Start for Team 1</button>
                             <button onClick={() => onStart(2)} disabled={activeTeam !== null} className="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg disabled:bg-gray-400">Start for Team 2</button>
@@ -148,10 +148,10 @@
                     <h1 className="text-2xl font-bold text-gray-800 mb-2">Activity 1: Vowel & Consonant Challenge</h1>
                     <p className="text-gray-600 mb-6">Select a category and start the timer for a team to find all the words.</p>
                     <TimerControls onStart={startForTeam} times={times} activeTeam={activeTeam}>
-                        {(activeTeam) => (
+                        {(activeTeam, startFn) => (
                             <>
-                                <button onClick={() => startForTeam(1, 'vowel')} disabled={activeTeam !== null} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg disabled:bg-gray-400">Team 1: Find Vowels</button>
-                                <button onClick={() => startForTeam(2, 'consonant')} disabled={activeTeam !== null} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg disabled:bg-gray-400">Team 2: Find Consonants</button>
+                                <button onClick={() => startFn(1, 'vowel')} disabled={activeTeam !== null} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg disabled:bg-gray-400">Team 1: Find Vowels</button>
+                                <button onClick={() => startFn(2, 'consonant')} disabled={activeTeam !== null} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg disabled:bg-gray-400">Team 2: Find Consonants</button>
                             </>
                         )}
                     </TimerControls>
