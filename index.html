@@ -3,654 +3,612 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Final Review IPA</title>
+    <title>IPA Tổng Kết: From Sounds to Sentences (Bản Hoàn Thiện)</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        @media (min-width: 1280px) { 
-            #page-grid-container { display: grid; grid-template-columns: 1fr minmax(auto, 48rem) 1fr; gap: 2rem; align-items: start; }
-            #main-content-wrapper { grid-column: 2; }
-            #left-sidebar, #right-sidebar { position: sticky; top: 2rem; }
-            #left-sidebar { justify-self: end; }
-            #right-sidebar { justify-self: start; }
+        :root {
+            --primary-color: #4f46e5;
+            --secondary-color: #f59e0b;
+            --background-color: #f3f4f6;
+            --text-color: #1f2937;
+            --card-bg: #ffffff;
+            --correct-color: #10b981;
+            --wrong-color: #ef4444;
+            --neutral-color: #6b7280;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+        .main-content {
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .scoreboard {
+            position: fixed;
+            top: 0;
+            height: 100vh;
+            width: 240px;
+            background-color: #eef2ff;
+            padding: 20px;
+            overflow-y: auto;
+            border-right: 1px solid #ddd;
+            border-left: 1px solid #ddd;
+            display: none; /* Hidden by default, shown on large screens */
+        }
+        #left-scoreboard {
+            left: 0;
+            border-left: none;
+        }
+        #right-scoreboard {
+            right: 0;
+            border-right: none;
+        }
+        .student-entry {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .student-name {
+            font-weight: 600;
+            flex-grow: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .student-score {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin: 0 10px;
+        }
+        .score-btn {
+            background-color: var(--correct-color);
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            border: none;
+            font-size: 1.5em;
+            line-height: 1;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            flex-shrink: 0;
+        }
+        .score-btn:hover {
+            background-color: #059669;
+        }
+        .ipa-option, .ipa {
+            font-family: 'Lucida Sans Unicode', 'Arial Unicode MS', sans-serif;
+            color: var(--primary-color);
+        }
+        .syllable {
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .syllable:hover {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        .feedback {
+            transition: opacity 0.5s;
+        }
+        .ipa-option.correct {
+            background-color: var(--correct-color);
+            border-color: var(--correct-color);
+            color: white;
+        }
+        .ipa-option.wrong {
+            background-color: var(--wrong-color);
+            border-color: var(--wrong-color);
+            color: white;
+        }
+        button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        /* Responsive adjustments for scoreboards */
+        @media (min-width: 1400px) {
+            .main-content {
+                margin-left: 250px;
+                margin-right: 250px;
+            }
+            .scoreboard {
+                display: block;
+            }
         }
     </style>
 </head>
-<body class="bg-gray-100 py-8">
-    <div id="root"></div>
-    
-    <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
+<body class="p-4 md:p-8">
 
-        // --- Data ---
-        const soundSorterWordsData = [ { word: 'apple', type: 'vowel' }, { word: 'cat', type: 'consonant' }, { word: 'hour', type: 'vowel' }, { word: 'user', type: 'consonant' }, { word: 'egg', type: 'vowel' }, { word: 'table', type: 'consonant' }, { word: 'ice', type: 'vowel' }, { word: 'one', type: 'consonant' }, { word: 'open', type: 'vowel' }, { word: 'pen', type: 'consonant' }, { word: 'under', type: 'vowel' }, { word: 'ship', type: 'consonant' }, { word: 'honor', type: 'vowel' }, { word: 'university', type: 'consonant' }, { word: 'eagle', type: 'vowel' }, { word: 'yellow', type: 'consonant' }, { word: 'island', type: 'vowel' }, { word: 'orange', type: 'vowel' }, { word: 'actor', type: 'vowel' }, { word: 'engine', type: 'vowel' }, { word: 'uncle', type: 'vowel' }, { word: 'igloo', type: 'vowel' }, { word: 'oven', type: 'vowel' }, { word: 'artist', type: 'vowel' }, { word: 'house', type: 'consonant' }, { word: 'game', type: 'consonant' }, { word: 'water', type: 'consonant' }, { word: 'lamp', type: 'consonant' }, { word: 'robot', type: 'consonant' }, { word: 'pizza', type: 'consonant' }, { word: 'juice', type: 'consonant' }, { word: 'music', type: 'consonant' } ];
-        const diphthongRoundsData = [ { sound: '/aɪ/', words: [ { word: 'time', correct: true }, { word: 'see', correct: false }, { word: 'light', correct: true }, { word: 'boat', correct: false }, { word: 'my', correct: true }, { word: 'go', correct: false }, { word: 'why', correct: true }, { word: 'food', correct: false }, { word: 'bike', correct: true }, { word: 'say', correct: false }, { word: 'fly', correct: true }, { word: 'meet', correct: false } ] }, { sound: '/eɪ/', words: [ { word: 'say', correct: true }, { word: 'sit', correct: false }, { word: 'wait', correct: true }, { word: 'now', correct: false }, { word: 'great', correct: true }, { word: 'lot', correct: false }, { word: 'eight', correct: true }, { word: 'boy', correct: false }, { word: 'late', correct: true }, { word: 'my', correct: false }, { word: 'train', correct: true }, { word: 'cat', correct: false } ] }, { sound: '/ɔɪ/', words: [ { word: 'boy', correct: true }, { word: 'go', correct: false }, { word: 'noise', correct: true }, { word: 'day', correct: false }, { word: 'coin', correct: true }, { word: 'see', correct: false }, { word: 'toy', correct: true }, { word: 'time', correct: false }, { word: 'voice', correct: true }, { word: 'loud', correct: false }, { word: 'boil', correct: true }, { word: 'house', correct: false } ] }, { sound: '/aʊ/', words: [ { word: 'now', correct: true }, { word: 'note', correct: false }, { word: 'house', correct: true }, { word: 'hear', correct: false }, { word: 'loud', correct: true }, { word: 'boy', correct: false }, { word: 'about', correct: true }, { word: 'bear', correct: false }, { word: 'town', correct: true }, { word: 'tour', correct: false }, { word: 'mouse', correct: true }, { word: 'more', correct: false } ] } ];
-        const minimalPairSetA = [ { ipa: '/fæn/', word: 'fan' }, { ipa: '/siːt/', word: 'seat' }, { ipa: '/bæk/', word: 'back' }, { ipa: '/θɪŋk/', word: 'think' }, { ipa: '/laɪt/', word: 'light' }, { ipa: '/tʃiːp/', word: 'cheap' } ];
-        const minimalPairSetB = [ { ipa: '/væn/', word: 'van' }, { ipa: '/sɪt/', word: 'sit' }, { ipa: '/bæg/', word: 'bag' }, { ipa: '/sɪŋk/', word: 'sink' }, { ipa: '/raɪt/', word: 'right' }, { ipa: '/ʃiːp/', word: 'sheep' } ];
-        const ipaQuotesData = [ { quote: "The only thing we have to fear is fear itself.", author: "Franklin D. Roosevelt", ipa: "/ði ˈoʊnli θɪŋ wi hæv tu fɪər ɪz fɪər ɪtˈsɛlf./" }, { quote: "To be, or not to be, that is the question.", author: "William Shakespeare", ipa: "/tu bi, ɔːr nɒt tu bi, ðæt ɪz ðə ˈkwɛstʃən./" }, { quote: "I think, therefore I am.", author: "René Descartes", ipa: "/aɪ θɪŋk, ˈðɛərˌfɔːr aɪ æm./" }, { quote: "That's one small step for a man, one giant leap for mankind.", author: "Neil Armstrong", ipa: "/ðæts wʌn smɔːl stɛp fɔːr ə mæn, wʌn ˈdʒaɪənt liːp fɔːr mænˈkaɪnd./" }, { quote: "The journey of a thousand miles begins with a single step.", author: "Lao Tzu", ipa: "/ðə ˈdʒɜːrni əv ə ˈθaʊzənd maɪlz bɪˈɡɪnz wɪð ə ˈsɪŋɡəl stɛp./" }, { quote: "All that glitters is not gold.", author: "William Shakespeare", ipa: "/ɔːl ðæt ˈɡlɪtərz ɪz nɒt ɡoʊld./" } ];
-        const oddOneOutData = [ { words: ['seat', 'beat', 'feet', 'sit'], odd: 'sit', reason: 'Has the short vowel /ɪ/, while the others have the long vowel /i:/.' }, { words: ['say', 'make', 'late', 'cat'], odd: 'cat', reason: 'Has the vowel /æ/, while the others have the diphthong /eɪ/.' }, { words: ['back', 'lap', 'race', 'bag'], odd: 'bag', reason: 'Ends with a voiced consonant /g/, while the others end with voiceless consonants.' }, { words: ['fan', 'very', 'vine', 'voice'], odd: 'fan', reason: 'Starts with a voiceless consonant /f/, while the others start with the voiced /v/.' }, { words: ['cut', 'sun', 'luck', 'put'], odd: 'put', reason: 'Has the vowel /ʊ/, while the others have the vowel /ʌ/.' }, { words: ['hour', 'honor', 'heir', 'horse'], odd: 'horse', reason: 'The initial /h/ is pronounced, unlike in the other words.' }, { words: ['three', 'through', 'think', 'this'], odd: 'this', reason: 'Starts with a voiced /ð/ sound, while the others start with the voiceless /θ/.' }, { words: ['food', 'blue', 'shoe', 'good'], odd: 'good', reason: 'Has the short vowel /ʊ/, while the others have the long vowel /u:/.' } ];
-        const findTheMistakeData = [ { word: 'sheep', mistake: '/ʃɪp/', incorrectSymbol: 'ɪ', correctIpa: '/ʃiːp/' }, { word: 'think', mistake: '/sɪŋk/', incorrectSymbol: 's', correctIpa: '/θɪŋk/' }, { word: 'bag', mistake: '/bæk/', incorrectSymbol: 'k', correctIpa: '/bæg/' }, { word: 'very', mistake: '/ˈfɛri/', incorrectSymbol: 'f', correctIpa: '/ˈvɛri/' }, { word: 'they', mistake: '/deɪ/', incorrectSymbol: 'd', correctIpa: '/ðeɪ/' }, { word: 'pleasure', mistake: '/ˈplɛʃər/', incorrectSymbol: 'ʃ', correctIpa: '/ˈplɛʒər/' }, { word: 'church', mistake: '/ʃɜːrtʃ/', incorrectSymbol: 'ʃ', correctIpa: '/tʃɜːrtʃ/' }, { word: 'juice', mistake: '/ʒuːs/', incorrectSymbol: 'ʒ', correctIpa: '/dʒuːs/' } ];
-        const syllableCountingData = [ { word: 'information', count: 4 }, { word: 'beautiful', count: 3 }, { word: 'computer', count: 3 }, { word: 'banana', count: 3 }, { word: 'syllable', count: 3 }, { word: 'interesting', count: 3 }, { word: 'family', count: 3 }, { word: 'usually', count: 3 }, { word: 'different', count: 2 }, { word: 'teacher', count: 2 }, { word: 'again', count: 2 }, { word: 'today', count: 2 }, { word: 'house', count: 1 }, { word: 'school', count: 1 }, { word: 'friend', count: 1 }, { word: 'speak', count: 1 } ];
-        const stressPatternData = [ { pattern: 'Ooo', correct: 'beautiful', incorrect: ['computer', 'yesterday', 'delicious'] }, { pattern: 'oOo', correct: 'banana', incorrect: ['important', 'remember', 'together'] }, { pattern: 'ooO', correct: 'understand', incorrect: ['Japanese', 'afternoon', 'seventeen'] }, { pattern: 'Oo', correct: 'teacher', incorrect: ['always', 'happy', 'finish'] }, { pattern: 'oO', correct: 'again', incorrect: ['before', 'explain', 'repeat'] }, { pattern: 'Oooo', correct: 'interesting', incorrect: ['vegetable', 'comfortable', 'usually'] }, { pattern: 'oOoo', correct: 'photography', incorrect: ['information', 'communication', 'nationality'] }, { pattern: 'ooOo', correct: 'university', incorrect: ['imagination', 'pronunciation', 'congratulations'] } ];
-        const intonationData = [ { sentence: "You're sure?", type: 'question', rising: true, falling: false }, { sentence: "It's cold.", type: 'statement', rising: false, falling: true }, { sentence: "She passed the exam?", type: 'surprise', rising: true, falling: false }, { sentence: "That's a great idea!", type: 'excitement', rising: false, falling: true }, { sentence: "Is it time to go?", type: 'question', rising: true, falling: false }, { sentence: "He's not coming.", type: 'statement', rising: false, falling: true }, { sentence: "You found it?", type: 'surprise', rising: true, falling: false }, { sentence: "I absolutely love it.", type: 'excitement', rising: false, falling: true } ];
-        
-        const shuffleArray = (array) => { let c = array.length; while (c > 0) { let i = Math.floor(Math.random() * c); c--; [array[c], array[i]] = [array[i], array[c]]; } return array; };
-        
-        const TeamCard = ({ team, index, onScoreChange }) => (
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 flex flex-col h-full">
-                <h3 className="font-bold text-lg mb-2 text-gray-700">Team {index + 1}</h3>
-                <ul className="text-sm list-disc list-inside text-gray-600 mb-4 flex-grow">{team.members.map(name => <li key={name}>{name}</li>)}</ul>
-                <div className="mt-auto pt-2 border-t border-gray-200 flex items-center justify-center gap-4">
-                    <button onClick={() => onScoreChange(index, -1)} className="bg-red-500 text-white font-bold rounded-full w-8 h-8 flex items-center justify-center text-xl hover:bg-red-600">-</button>
-                    <span className="font-bold text-2xl text-gray-800">{team.score}</span>
-                    <button onClick={() => onScoreChange(index, 1)} className="bg-green-500 text-white font-bold rounded-full w-8 h-8 flex items-center justify-center text-xl hover:bg-green-600">+</button>
-                </div>
-            </div>
-        );
-        const StickyTeamCard = ({ team, index, onScoreChange }) => ( <div className="w-64 bg-white rounded-xl shadow-lg p-4 flex flex-col"><TeamCard team={team} index={index} onScoreChange={onScoreChange} /></div> );
+    <!-- Scoreboards (Fixed Position) -->
+    <div id="left-scoreboard" class="scoreboard">
+        <h2 class="text-xl font-bold text-center text-indigo-700 mb-4">Bảng Điểm</h2>
+        <div id="left-scoreboard-content"></div>
+    </div>
+    <div id="right-scoreboard" class="scoreboard">
+        <h2 class="text-xl font-bold text-center text-indigo-700 mb-4">Bảng Điểm</h2>
+        <div id="right-scoreboard-content"></div>
+    </div>
 
-        const TeamSplitter = ({ onTeamsUpdate }) => {
-            const [nameInput, setNameInput] = useState('');
-            const splitTeams = () => {
-                const names = nameInput.split('\n').map(name => name.trim()).filter(name => name);
-                if (names.length === 0) return;
-                const shuffledNames = shuffleArray(names);
-                const newTeams = Array.from({ length: 2 }, () => ({ members: [], score: 0 }));
-                shuffledNames.forEach((name, index) => newTeams[index % 2].members.push(name));
-                onTeamsUpdate(newTeams);
-            };
-            return (
-                <div className="w-full bg-white rounded-xl shadow-lg p-6 md:p-8 text-center">
-                    <h2 className="text-3xl font-bold text-gray-800 mb-2">Start Class</h2>
-                    <p className="text-gray-600 mb-6">Enter names and click "Split Teams". The game is set for 2 teams.</p>
-                    <textarea value={nameInput} onChange={(e) => setNameInput(e.target.value)} className="w-full h-32 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none" placeholder="Enter names, one per line..."></textarea>
-                    <button onClick={splitTeams} className="mt-4 w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-lg transition-all">Split Teams</button>
-                </div>
-            );
-        };
-        
-        const TimerControls = ({ onStart, times, activeTeam, children }) => (
-            <div className="my-6 p-4 bg-gray-100 rounded-lg">
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="text-center">
-                        <h3 className="font-semibold text-lg">Team 1 Time</h3>
-                        <p className="text-3xl font-mono">{times[1] !== null ? `${times[1]}s` : '0s'}</p>
-                    </div>
-                    <div className="text-center">
-                         <h3 className="font-semibold text-lg">Team 2 Time</h3>
-                        <p className="text-3xl font-mono">{times[2] !== null ? `${times[2]}s` : '0s'}</p>
-                    </div>
-                </div>
-                <div className="mt-4 flex justify-center gap-4">
-                    {children ? children(activeTeam, onStart) : (
-                        <>
-                            <button onClick={() => onStart(1)} disabled={activeTeam !== null} className="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg disabled:bg-gray-400">Start for Team 1</button>
-                            <button onClick={() => onStart(2)} disabled={activeTeam !== null} className="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg disabled:bg-gray-400">Start for Team 2</button>
-                        </>
-                    )}
-                </div>
-            </div>
-        );
+    <div class="max-w-4xl main-content">
+        <div class="bg-white rounded-2xl shadow-lg p-6 md:p-10">
+            <header class="text-center pb-6 border-b-2 border-indigo-200">
+                <h1 class="text-3xl md:text-4xl font-bold text-indigo-700">IPA Tổng Kết: From Sounds to Sentences</h1>
+                <p class="text-gray-500 mt-2">Buổi học ôn tập tương tác (Bản Hoàn Thiện)</p>
+            </header>
 
-        const SoundSorterGame = () => {
-            const [words, setWords] = useState([]);
-            const [guessed, setGuessed] = useState([]);
-            const [activeTeam, setActiveTeam] = useState(null);
-            const [selectedCategory, setSelectedCategory] = useState(null);
-            const [timer, setTimer] = useState(0);
-            const [isTimerActive, setIsTimerActive] = useState(false);
-            const [times, setTimes] = useState({ 1: null, 2: null });
-            const timerRef = useRef(null);
-            
-            useEffect(() => { setWords(shuffleArray(soundSorterWordsData)); }, []);
-            
-            const totalCorrectNeeded = 16; 
+            <main class="mt-8">
+                <!-- CLASS MANAGEMENT -->
+                <section id="class-management" class="mb-12">
+                     <h2 class="text-2xl font-semibold text-gray-800 border-l-4 border-indigo-500 pl-4 mb-6">Quản lý Lớp học</h2>
+                     <div class="bg-gray-50 rounded-lg p-6">
+                         <h3 class="text-xl font-semibold mb-4">Thêm học sinh</h3>
+                         <div class="flex flex-col sm:flex-row gap-4">
+                             <input type="text" id="student-name-input" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="Nhập tên học sinh...">
+                             <button id="add-student-btn" class="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition">Thêm</button>
+                         </div>
+                         <p class="text-sm text-gray-500 mt-2">Lưu ý: Bảng điểm sẽ hiển thị ở hai bên trên màn hình lớn.</p>
+                     </div>
+                </section>
 
-            useEffect(() => {
-                if (isTimerActive) { timerRef.current = setInterval(() => setTimer(prev => prev + 1), 1000); } 
-                else { clearInterval(timerRef.current); }
-                return () => clearInterval(timerRef.current);
-            }, [isTimerActive]);
-
-            useEffect(() => {
-                const correctGuesses = guessed.filter(g => g.isCorrect).length;
-                if (activeTeam && correctGuesses === totalCorrectNeeded) {
-                    setIsTimerActive(false);
-                    setTimes(prev => ({...prev, [activeTeam]: timer }));
-                }
-            }, [guessed, activeTeam]);
-
-            const startForTeam = (team, category) => {
-                setWords(shuffleArray(soundSorterWordsData));
-                setGuessed([]);
-                setTimer(0);
-                setActiveTeam(team);
-                setSelectedCategory(category);
-                setIsTimerActive(true);
-            };
-
-            const handleWordClick = (word) => {
-                if (!isTimerActive || guessed.some(g => g.word === word.word)) return;
-                const isCorrect = word.type === selectedCategory;
-                setGuessed(prev => [...prev, {word: word.word, isCorrect}]);
-                if (!isCorrect) setTimeout(() => setGuessed(prev => prev.filter(g => g.word !== word.word)), 800);
-            };
-            
-            const getWordClass = (word) => {
-                const guess = guessed.find(g => g.word === word.word);
-                if (guess) return guess.isCorrect ? 'opacity-0 invisible' : 'bg-red-200 text-red-800';
-                return 'bg-white hover:bg-gray-100';
-            };
-
-            return (
-                <div className="w-full bg-white rounded-xl shadow-lg p-6 md:p-8 text-center">
-                    <h1 className="text-2xl font-bold text-gray-800 mb-2">Activity 1: Vowel & Consonant Challenge</h1>
-                    <p className="text-gray-600 mb-6">Select a category and start the timer for a team to find all the words.</p>
-                    <TimerControls onStart={startForTeam} times={times} activeTeam={activeTeam}>
-                        {(activeTeam, startFn) => (
-                            <>
-                                <button onClick={() => startFn(1, 'vowel')} disabled={activeTeam !== null} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg disabled:bg-gray-400">Team 1: Find Vowels</button>
-                                <button onClick={() => startFn(2, 'consonant')} disabled={activeTeam !== null} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg disabled:bg-gray-400">Team 2: Find Consonants</button>
-                            </>
-                        )}
-                    </TimerControls>
-                    <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
-                        {words.map(word => (<button key={word.word} onClick={() => handleWordClick(word)} className={`p-2 rounded-lg shadow-sm transition-all duration-300 ${getWordClass(word)}`}>{word.word}</button>))}
-                    </div>
-                    {isTimerActive && <button onClick={() => setIsTimerActive(false)} className="mt-4 bg-red-500 text-white font-bold py-2 px-4 rounded-lg">Stop Timer / Finish Turn</button>}
-                </div>
-            );
-        };
-        const DiphthongHunter = () => {
-            const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
-            const [isChecked, setIsChecked] = useState(false);
-            const round = diphthongRoundsData[currentRoundIndex];
-            const [wordState, setWordState] = useState([]);
-            const [activeTeam, setActiveTeam] = useState(null);
-            const [timer, setTimer] = useState(0);
-            const [isTimerActive, setIsTimerActive] = useState(false);
-            const [times, setTimes] = useState({ 1: null, 2: null });
-            const timerRef = useRef(null);
-            
-            useEffect(() => { if (isTimerActive) { timerRef.current = setInterval(() => setTimer(prev => prev + 1), 1000); } else { clearInterval(timerRef.current); } return () => clearInterval(timerRef.current); }, [isTimerActive]);
-
-            const startRoundForTeam = (teamNumber) => { setWordState(shuffleArray(round.words).map(w => ({...w, status: 'unclicked'}))); setIsChecked(false); setTimer(0); setActiveTeam(teamNumber); setIsTimerActive(true); };
-            const handleClick = (clickedWord) => { if(!isTimerActive || isChecked) return; setWordState(prev => prev.map(w => w.word === clickedWord.word ? {...w, status: w.correct ? 'correct' : 'incorrect'} : w)); };
-            const handleCheck = () => { setIsChecked(true); setIsTimerActive(false); setTimes(prev => ({...prev, [activeTeam]: timer })); setActiveTeam(null); };
-            const nextRound = () => { setCurrentRoundIndex(prev => (prev + 1) % diphthongRoundsData.length); };
-
-            useEffect(() => { setWordState(shuffleArray(round.words).map(w => ({...w, status: 'unclicked'}))); setIsChecked(false); setActiveTeam(null); setTimer(0); setIsTimerActive(false); }, [currentRoundIndex]);
-
-            return (
-                 <div className="w-full bg-white rounded-xl shadow-lg p-6 md:p-8 text-center">
-                    <h1 className="text-2xl font-bold text-gray-800 mb-2">Activity 2: Diphthong Hunter</h1>
-                    <p className="text-gray-600 mb-6">Click on all the words that contain the target sound.</p>
-                     <TimerControls onStart={startRoundForTeam} times={times} activeTeam={activeTeam} />
-                    <div className="bg-gray-50 p-6 rounded-lg shadow-inner mb-6">
-                        <h2 className="text-xl font-semibold text-gray-700">Find the sound: <span className="text-4xl font-mono text-indigo-600 ml-2">{round.sound}</span></h2>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                        {wordState.map(wordObj => {
-                            let btnClass = 'p-4 bg-white rounded-lg shadow-sm text-lg font-semibold text-gray-700 hover:bg-gray-50 transition-colors';
-                            if (wordObj.status === 'correct') { btnClass = 'p-4 rounded-lg shadow-sm text-lg font-semibold bg-green-200 text-green-800'; } 
-                            else if (wordObj.status === 'incorrect') { btnClass = 'p-4 rounded-lg shadow-sm text-lg font-semibold bg-red-200 text-red-800'; } 
-                            else if (isChecked && wordObj.correct) { btnClass = 'p-4 rounded-lg shadow-sm text-lg font-semibold bg-yellow-200 ring-2 ring-yellow-400'; }
-                            return (<button key={wordObj.word} onClick={() => handleClick(wordObj)} disabled={!isTimerActive || (wordObj.status !== 'unclicked' && !isChecked)} className={btnClass}>{wordObj.word}</button>);
-                        })}
-                    </div>
-                    <div className="mt-8 flex justify-center gap-4">
-                        <button onClick={handleCheck} disabled={!isTimerActive} className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-8 rounded-lg transition-all disabled:bg-gray-300">Check Answers & Stop</button>
-                        <button onClick={nextRound} className="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg transition-all">Next Sound</button>
-                    </div>
-                </div>
-            );
-        };
-        const MinimalPairMemoryGame = () => {
-            const [cards, setCards] = useState([]);
-            const [flippedIndexes, setFlippedIndexes] = useState([]);
-            const [matchedIndexes, setMatchedIndexes] = useState([]);
-            const [activeTeam, setActiveTeam] = useState(null);
-            const [timer, setTimer] = useState(0);
-            const [isTimerActive, setIsTimerActive] = useState(false);
-            const [times, setTimes] = useState({ 1: null, 2: null });
-            const timerRef = useRef(null);
-
-            useEffect(() => { if (isTimerActive) { timerRef.current = setInterval(() => setTimer(prev => prev + 1), 1000); } else { clearInterval(timerRef.current); } return () => clearInterval(timerRef.current); }, [isTimerActive]);
-            useEffect(() => { if (cards.length > 0 && matchedIndexes.length === cards.length) { setIsTimerActive(false); if (activeTeam) setTimes(prev => ({...prev, [activeTeam]: timer })); setActiveTeam(null); } }, [matchedIndexes]);
-            
-            const loadGame = (set) => {
-                const gameCards = set.flatMap(pair => [ { type: 'ipa', value: pair.ipa, pairId: pair.word }, { type: 'word', value: pair.word, pairId: pair.ipa } ]);
-                setCards(shuffleArray(gameCards));
-                resetGameState();
-            };
-            
-            const resetGameState = () => { setFlippedIndexes([]); setMatchedIndexes([]); setTimer(0); setIsTimerActive(false); setActiveTeam(null); };
-            const handleCardClick = (index) => {
-                if (!activeTeam || flippedIndexes.length >= 2 || flippedIndexes.includes(index) || matchedIndexes.includes(index)) return;
-                if (!isTimerActive) setIsTimerActive(true);
-                const newFlippedIndexes = [...flippedIndexes, index];
-                setFlippedIndexes(newFlippedIndexes);
-                if (newFlippedIndexes.length === 2) {
-                    const card1 = cards[newFlippedIndexes[0]];
-                    const card2 = cards[newFlippedIndexes[1]];
-                    if (card1.pairId === card2.value) { setTimeout(() => { setMatchedIndexes(prev => [...prev, ...newFlippedIndexes]); setFlippedIndexes([]); }, 500); } 
-                    else { setTimeout(() => setFlippedIndexes([]), 1200); }
-                }
-            };
-            const startForTeam = (teamNumber) => { if(cards.length === 0) { alert("Please load a set first!"); return; } resetGameState(); setTimer(0); setActiveTeam(teamNumber); };
-
-            return (
-                <div className="w-full bg-white rounded-xl shadow-lg p-6 md:p-8 text-center">
-                    <h1 className="text-2xl font-bold text-gray-800 mb-2">Activity 3: Minimal Pair Memory Game</h1>
-                    <p className="text-gray-600 mb-6">Select a set, start the timer for a team, and match the pairs as fast as you can!</p>
-                    <div className="flex justify-center gap-4 mb-4">
-                        <button onClick={() => loadGame(minimalPairSetA)} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">Load Set A</button>
-                        <button onClick={() => loadGame(minimalPairSetB)} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg">Load Set B</button>
-                    </div>
-                     <TimerControls onStart={startForTeam} times={times} activeTeam={activeTeam} />
-                     <div className="relative p-4 rounded-lg shadow-inner bg-gray-50 min-h-[200px]">
-                        {!activeTeam && cards.length > 0 && <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10 rounded-lg"><p className="text-white text-2xl font-bold">Select a team to start!</p></div>}
-                        <div className={`grid grid-cols-4 gap-4 ${!activeTeam ? 'opacity-50' : ''}`}>
-                             {cards.map((card, index) => {
-                                const isFlipped = flippedIndexes.includes(index);
-                                const isMatched = matchedIndexes.includes(index);
-                                return ( <div key={index} onClick={() => handleCardClick(index)} className={`h-24 flex items-center justify-center rounded-lg cursor-pointer transition-all duration-300 ${isFlipped ? 'bg-white' : 'bg-indigo-400'} ${isMatched ? 'invisible' : ''}`}> {isFlipped && !isMatched && <span className={`text-xl font-bold ${card.type === 'ipa' ? 'font-mono' : ''}`}>{card.value}</span>} </div>)
-                            })}
+                <!-- PART 1: SOUNDS REVIEW -->
+                <section class="mb-12">
+                    <h2 class="text-2xl font-semibold text-gray-800 border-l-4 border-indigo-500 pl-4 mb-6">Phần 1: Ôn tập ÂM 🗣️</h2>
+                    
+                    <div class="bg-gray-50 rounded-lg p-6 mb-6">
+                        <h3 class="text-xl font-semibold mb-4">Game: Sound Quiz (Chọn phiên âm đúng)</h3>
+                        <p class="mb-4 text-gray-600" id="sound-quiz-prompt">Nghe từ và chọn ký tự phiên âm đúng.</p>
+                        <div class="flex items-center justify-center my-6">
+                            <button class="px-5 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-3xl" id="play-sound-quiz-btn">▶️</button>
+                            <p class="ml-4 text-3xl font-bold text-gray-700" id="sound-quiz-word"></p>
                         </div>
-                        {matchedIndexes.length > 0 && matchedIndexes.length === cards.length && <p className="mt-4 text-2xl font-bold text-green-600">Congratulations! You found all pairs in {timer} seconds!</p>}
-                    </div>
-                </div>
-            );
-        };
-        const QuoteDecoder = () => {
-            const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
-            const [userInput, setUserInput] = useState('');
-            const [result, setResult] = useState(null);
-            const [activeTeam, setActiveTeam] = useState(null);
-            const [timer, setTimer] = useState(0);
-            const [isTimerActive, setIsTimerActive] = useState(false);
-            const [times, setTimes] = useState({ 1: null, 2: null });
-            const timerRef = useRef(null);
-            const quote = ipaQuotesData[currentQuoteIndex];
-
-            useEffect(() => { if (isTimerActive) { timerRef.current = setInterval(() => setTimer(prev => prev + 1), 1000); } else { clearInterval(timerRef.current); } return () => clearInterval(timerRef.current); }, [isTimerActive]);
-
-            const startForTeam = (teamNumber) => { setUserInput(''); setResult(null); setTimer(0); setActiveTeam(teamNumber); setIsTimerActive(true); };
-            const checkAnswer = () => {
-                if (!isTimerActive) return;
-                const cleanOriginal = quote.quote.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
-                const cleanUser = userInput.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
-                if (cleanOriginal === cleanUser) { setIsTimerActive(false); setTimes(prev => ({...prev, [activeTeam]: timer })); setResult('correct'); } 
-                else { setResult('incorrect'); }
-            };
-            const nextQuote = () => { setCurrentQuoteIndex(prev => (prev + 1) % ipaQuotesData.length); setUserInput(''); setResult(null); setActiveTeam(null); setTimer(0); setIsTimerActive(false); setTimes({ 1: null, 2: null }); };
-
-            return (
-                <div className="w-full bg-white rounded-xl shadow-lg p-6 md:p-8 text-center">
-                     <h1 className="text-2xl font-bold text-gray-800 mb-2">Activity 4: IPA Quote Decoder</h1>
-                    <p className="text-gray-600 mb-6">Start the timer, then transcribe the quote into English.</p>
-                    <TimerControls onStart={startForTeam} times={times} activeTeam={activeTeam} />
-                    <div className="bg-gray-50 p-8 rounded-lg shadow-inner">
-                        <p className="text-2xl md:text-3xl font-mono text-cyan-700 leading-relaxed mb-6">{quote.ipa}</p>
-                        <textarea value={userInput} onChange={(e) => setUserInput(e.target.value)} disabled={!isTimerActive} className="w-full h-24 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:outline-none disabled:bg-gray-200" placeholder="Type your transcription here..."></textarea>
-                        {result === 'correct' && <p className="mt-4 text-green-600 font-bold">Correct! Well done!</p>}
-                        {result === 'incorrect' && <p className="mt-4 text-red-600 font-bold">Not quite right. Please try again!</p>}
-                    </div>
-                    <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
-                        <button onClick={checkAnswer} disabled={!isTimerActive} className="w-full sm:w-auto bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg transition-all disabled:bg-gray-300">Check Answer & Stop Timer</button>
-                        <button onClick={nextQuote} className="w-full sm:w-auto bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 px-6 rounded-lg transition-all">Next Quote</button>
-                    </div>
-                </div>
-            );
-        };
-        const OddOneOutGame = () => {
-            const [questions, setQuestions] = useState([]);
-            const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-            const [selection, setSelection] = useState({ word: null, isCorrect: false });
-            const [isAnswered, setIsAnswered] = useState(false);
-            const [activeTeam, setActiveTeam] = useState(null);
-            const [timer, setTimer] = useState(0);
-            const [isTimerActive, setIsTimerActive] = useState(false);
-            const [times, setTimes] = useState({ 1: null, 2: null });
-            const timerRef = useRef(null);
-
-            useEffect(() => { if (isTimerActive) { timerRef.current = setInterval(() => setTimer(prev => prev + 1), 1000); } else { clearInterval(timerRef.current); } return () => clearInterval(timerRef.current); }, [isTimerActive]);
-
-            const startForTeam = (teamNumber) => {
-                setQuestions(shuffleArray(oddOneOutData));
-                setCurrentQuestionIndex(0);
-                setIsAnswered(false);
-                setSelection({ word: null, isCorrect: false });
-                setTimer(0);
-                setActiveTeam(teamNumber);
-                setIsTimerActive(true);
-            };
-
-            const handleSelect = (word) => {
-                if(isAnswered || !isTimerActive) return;
-                const isCorrect = word === questions[currentQuestionIndex].odd;
-                setSelection({ word, isCorrect });
-                setIsAnswered(true);
-            };
-
-            const nextQuestion = () => {
-                if (currentQuestionIndex === questions.length - 1) {
-                    setIsTimerActive(false);
-                    setTimes(prev => ({...prev, [activeTeam]: timer }));
-                    setActiveTeam(null);
-                } else {
-                    setCurrentQuestionIndex(prev => prev + 1);
-                    setIsAnswered(false);
-                    setSelection({ word: null, isCorrect: false });
-                }
-            };
-
-            useEffect(() => { setQuestions(shuffleArray(oddOneOutData)); }, []);
-
-            if (questions.length === 0) return null;
-            const currentQuestion = questions[currentQuestionIndex];
-
-            return (
-                 <div className="w-full bg-white rounded-xl shadow-lg p-6 md:p-8 text-center">
-                    <h1 className="text-2xl font-bold text-gray-800 mb-2">Activity 5: Odd One Out</h1>
-                    <p className="text-gray-600 mb-6">Click the word that has a different sound from the others.</p>
-                    <TimerControls onStart={startForTeam} times={times} activeTeam={activeTeam} />
-                    <div className={`grid grid-cols-2 md:grid-cols-4 gap-4 ${!activeTeam ? 'opacity-50 pointer-events-none' : ''}`}>
-                        {currentQuestion.words.map(word => {
-                            let btnClass = "p-4 text-xl font-semibold rounded-lg shadow-sm transition-colors ";
-                            if (isAnswered) {
-                                if (word === currentQuestion.odd) { btnClass += "bg-green-200 text-green-800 ring-2 ring-green-500"; } 
-                                else if (word === selection.word && !selection.isCorrect) { btnClass += "bg-red-200 text-red-800"; } 
-                                else { btnClass += "bg-gray-100 text-gray-500"; }
-                            } else { btnClass += "bg-white hover:bg-gray-100"; }
-                            return <button key={word} onClick={() => handleSelect(word)} disabled={isAnswered} className={btnClass}>{word}</button>
-                        })}
-                    </div>
-                    {isAnswered && (
-                        <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-                            <h3 className="font-bold text-lg text-green-800">Explanation</h3>
-                            <p className="text-gray-700">The odd one out is <strong>{currentQuestion.odd}</strong>. {currentQuestion.reason}</p>
+                        <div id="sound-quiz-options" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+                        <div id="sound-quiz-feedback" class="feedback mt-6 p-3 rounded-lg text-center font-semibold text-white opacity-0"></div>
+                        <div class="text-center mt-6">
+                            <button id="next-sound-quiz-btn" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">Câu tiếp theo</button>
                         </div>
-                    )}
-                    <button onClick={nextQuestion} disabled={!isAnswered} className="mt-6 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg transition-all disabled:bg-gray-300">
-                        {currentQuestionIndex === questions.length - 1 ? 'Finish Round' : 'Next Question'}
-                    </button>
-                </div>
-            );
-        };
-        const FindTheMistakeGame = () => {
-            const [questions, setQuestions] = useState([]);
-            const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-            const [isAnswered, setIsAnswered] = useState(false);
-            const [selection, setSelection] = useState(null);
-            const [activeTeam, setActiveTeam] = useState(null);
-            const [timer, setTimer] = useState(0);
-            const [isTimerActive, setIsTimerActive] = useState(false);
-            const [times, setTimes] = useState({ 1: null, 2: null });
-            const timerRef = useRef(null);
+                    </div>
+                </section>
 
-            useEffect(() => { if (isTimerActive) { timerRef.current = setInterval(() => setTimer(prev => prev + 1), 1000); } else { clearInterval(timerRef.current); } return () => clearInterval(timerRef.current); }, [isTimerActive]);
-
-            const startForTeam = (teamNumber) => {
-                setQuestions(shuffleArray(findTheMistakeData));
-                setCurrentQuestionIndex(0);
-                setIsAnswered(false);
-                setSelection(null);
-                setTimer(0);
-                setActiveTeam(teamNumber);
-                setIsTimerActive(true);
-            };
-
-            const handleSymbolClick = (symbol) => {
-                if (isAnswered || !isTimerActive) return;
-                const isCorrect = symbol === questions[currentQuestionIndex].incorrectSymbol;
-                setSelection({ symbol, isCorrect });
-                setIsAnswered(true);
-            };
-
-            const nextQuestion = () => {
-                if (currentQuestionIndex === questions.length - 1) {
-                    setIsTimerActive(false);
-                    setTimes(prev => ({...prev, [activeTeam]: timer }));
-                    setActiveTeam(null);
-                } else {
-                    setCurrentQuestionIndex(prev => prev + 1);
-                    setIsAnswered(false);
-                    setSelection(null);
-                }
-            };
-
-            useEffect(() => { setQuestions(shuffleArray(findTheMistakeData)); }, []);
-
-            if (questions.length === 0) return null;
-            const currentQuestion = questions[currentQuestionIndex];
-
-            return (
-                <div className="w-full bg-white rounded-xl shadow-lg p-6 md:p-8 text-center">
-                    <h1 className="text-2xl font-bold text-gray-800 mb-2">Activity 6: Find the Mistake</h1>
-                    <p className="text-gray-600 mb-6">Find and click the incorrect symbol in the phonetic transcription.</p>
-                    <TimerControls onStart={startForTeam} times={times} activeTeam={activeTeam} />
-                    <div className={`p-8 rounded-lg shadow-inner bg-gray-50 ${!activeTeam ? 'opacity-50 pointer-events-none' : ''}`}>
-                        <p className="text-3xl font-bold mb-4">{currentQuestion.word}</p>
-                        <div className="flex justify-center items-center text-3xl font-mono text-cyan-700">
-                            <span>/</span>
-                            {currentQuestion.mistake.replace(/[/\s]/g, '').split('').map((symbol, i) => {
-                                let symbolClass = "cursor-pointer hover:bg-yellow-200 rounded px-1";
-                                if (isAnswered) {
-                                    if (symbol === currentQuestion.incorrectSymbol) {
-                                        symbolClass += " bg-green-200 ring-2 ring-green-500";
-                                    } else if (selection && symbol === selection.symbol && !selection.isCorrect) {
-                                        symbolClass += " bg-red-200";
-                                    }
-                                }
-                                return <span key={i} onClick={() => handleSymbolClick(symbol)} className={symbolClass}>{symbol}</span>;
-                            })}
-                            <span>/</span>
+                <!-- PART 2: WORDS REVIEW -->
+                <section class="mb-12">
+                    <h2 class="text-2xl font-semibold text-gray-800 border-l-4 border-indigo-500 pl-4 mb-6">Phần 2: Ôn tập TỪ 📝</h2>
+                    
+                    <div class="bg-gray-50 rounded-lg p-6 mb-6">
+                        <h3 class="text-xl font-semibold mb-4">Quiz: Nhấn trọng âm ở đâu?</h3>
+                        <p class="text-gray-600 mb-4">Click vào âm tiết bạn nghĩ là trọng âm chính của từ.</p>
+                        <div class="text-center p-4 bg-white rounded-lg shadow-inner">
+                            <div class="text-4xl font-bold tracking-wider" id="word-stress-quiz"></div>
                         </div>
-                        {isAnswered && (
-                            <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-                                <p className="text-gray-700">The incorrect symbol was <strong>/{currentQuestion.incorrectSymbol}/</strong>. The correct transcription is <strong>{currentQuestion.correctIpa}</strong>.</p>
+                        <div id="stress-feedback" class="feedback mt-4 p-3 rounded-lg text-center font-semibold text-white opacity-0"></div>
+                        <div class="text-center mt-4">
+                            <button class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition" id="next-stress-word">Từ Tiếp Theo</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- PART 3: SENTENCES REVIEW -->
+                <section class="mb-12">
+                    <h2 class="text-2xl font-semibold text-gray-800 border-l-4 border-indigo-500 pl-4 mb-6">Phần 3: Ôn tập CÂU & HỘI THOẠI 💬</h2>
+                     <div class="bg-gray-50 rounded-lg p-6 space-y-8">
+                        
+                        <!-- Activity 1: Linking Sounds -->
+                        <div>
+                            <h3 class="text-xl font-semibold mb-2">Linking Sounds Practice (Luyện nối âm)</h3>
+                            <p class="text-gray-600 mb-4">Đọc câu, sau đó bấm nút để xem các vị trí nối âm.</p>
+                            <div class="p-4 bg-white rounded-lg shadow-inner">
+                               <div class="flex items-center justify-center mb-4">
+                                   <button class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-2xl" id="play-linking-btn">▶️</button>
+                                   <p class="text-xl text-center ml-4" id="linking-sentence-display"></p>
+                               </div>
+                               <div class="flex justify-center space-x-4">
+                                   <button class="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition" id="show-linking-btn">Hiện nối âm</button>
+                                   <button class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition" id="next-linking-btn">Câu khác</button>
+                               </div>
                             </div>
-                        )}
-                    </div>
-                    <button onClick={nextQuestion} disabled={!isAnswered} className="mt-6 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg transition-all disabled:bg-gray-300">
-                        {currentQuestionIndex === questions.length - 1 ? 'Finish Round' : 'Next Question'}
-                    </button>
-                </div>
-            );
-        };
-        const SyllableCountingGame = () => {
-            const [questions, setQuestions] = useState([]);
-            const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-            const [isAnswered, setIsAnswered] = useState(false);
-            const [activeTeam, setActiveTeam] = useState(null);
-            const [timer, setTimer] = useState(0);
-            const [isTimerActive, setIsTimerActive] = useState(false);
-            const [times, setTimes] = useState({ 1: null, 2: null });
-            const timerRef = useRef(null);
-
-            useEffect(() => { if (isTimerActive) { timerRef.current = setInterval(() => setTimer(prev => prev + 1), 1000); } else { clearInterval(timerRef.current); } return () => clearInterval(timerRef.current); }, [isTimerActive]);
-
-            const startForTeam = (teamNumber) => {
-                setQuestions(shuffleArray(syllableCountingData));
-                setCurrentQuestionIndex(0);
-                setIsAnswered(false);
-                setTimer(0);
-                setActiveTeam(teamNumber);
-                setIsTimerActive(true);
-            };
-
-            const handleAnswer = (count) => {
-                if (isAnswered || !isTimerActive) return;
-                setIsAnswered(true);
-                if (currentQuestionIndex === questions.length - 1) {
-                    setIsTimerActive(false);
-                    setTimes(prev => ({...prev, [activeTeam]: timer }));
-                }
-            };
-
-            const nextQuestion = () => {
-                if (currentQuestionIndex === questions.length - 1) {
-                     setActiveTeam(null);
-                } else {
-                    setCurrentQuestionIndex(prev => prev + 1);
-                    setIsAnswered(false);
-                }
-            };
-            
-            useEffect(() => { setQuestions(shuffleArray(syllableCountingData)); }, []);
-
-            if (questions.length === 0) return null;
-            const currentQuestion = questions[currentQuestionIndex];
-
-            return (
-                <div className="w-full bg-white rounded-xl shadow-lg p-6 md:p-8 text-center">
-                    <h1 className="text-2xl font-bold text-gray-800 mb-2">Activity 7: Syllable Counting Race</h1>
-                    <p className="text-gray-600 mb-6">Start the timer and count the syllables for each word.</p>
-                    <TimerControls onStart={startForTeam} times={times} activeTeam={activeTeam} />
-                    <div className={`p-8 rounded-lg shadow-inner bg-gray-50 ${!activeTeam ? 'opacity-50 pointer-events-none' : ''}`}>
-                        <p className="text-4xl font-bold mb-6">{currentQuestion.word}</p>
-                        <div className="flex justify-center gap-4">
-                            {[1, 2, 3, '4+'].map(count => {
-                                let btnClass = "p-4 w-24 text-xl font-semibold rounded-lg shadow-sm transition-colors ";
-                                if (isAnswered) {
-                                    if (count === currentQuestion.count || (count === '4+' && currentQuestion.count >= 4)) {
-                                        btnClass += "bg-green-200 text-green-800 ring-2 ring-green-500";
-                                    } else {
-                                        btnClass += "bg-gray-100 text-gray-500";
-                                    }
-                                } else {
-                                    btnClass += "bg-white hover:bg-gray-100";
-                                }
-                                return <button key={count} onClick={() => handleAnswer(count)} disabled={isAnswered} className={btnClass}>{count}</button>
-                            })}
                         </div>
-                    </div>
-                    <button onClick={nextQuestion} disabled={!isAnswered} className="mt-6 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg transition-all disabled:bg-gray-300">
-                        {currentQuestionIndex === questions.length - 1 ? 'Finish Round' : 'Next Question'}
-                    </button>
-                </div>
-            );
-        };
-        const StressPatternMatch = () => {
-            const [questions, setQuestions] = useState([]);
-            const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-            const [isAnswered, setIsAnswered] = useState(false);
-            
-            useEffect(() => { setQuestions(shuffleArray(stressPatternData)); }, []);
 
-            const handleSelect = (word) => { if(!isAnswered) setIsAnswered(true); };
-            const nextQuestion = () => { setCurrentQuestionIndex(prev => (prev + 1) % questions.length); setIsAnswered(false); };
-
-            if (questions.length === 0) return null;
-            const currentQuestion = questions[currentQuestionIndex];
-
-            return (
-                <div className="w-full bg-white rounded-xl shadow-lg p-6 md:p-8 text-center">
-                    <h1 className="text-2xl font-bold text-gray-800 mb-2">Activity 8: Stress Pattern Match</h1>
-                    <p className="text-gray-600 mb-6">Find the word that matches the stress pattern.</p>
-                    <div className="p-8 rounded-lg shadow-inner bg-gray-50">
-                        <p className="text-4xl font-bold mb-6 text-indigo-600">{currentQuestion.pattern.replace(/o/g, '●').replace(/O/g, '⬤')}</p>
-                        <div className="grid grid-cols-2 gap-4">
-                            {shuffleArray([currentQuestion.correct, ...currentQuestion.incorrect]).map(word => {
-                                let btnClass = "p-4 text-xl font-semibold rounded-lg shadow-sm transition-colors ";
-                                if(isAnswered) {
-                                    btnClass += word === currentQuestion.correct ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800';
-                                } else {
-                                    btnClass += 'bg-white hover:bg-gray-100';
-                                }
-                                return <button key={word} onClick={() => handleSelect(word)} disabled={isAnswered} className={btnClass}>{word}</button>
-                            })}
-                        </div>
-                    </div>
-                    <button onClick={nextQuestion} disabled={!isAnswered} className="mt-6 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg transition-all disabled:bg-gray-300">
-                        {currentQuestionIndex === questions.length - 1 ? 'Finish' : 'Next Question'}
-                    </button>
-                </div>
-            );
-        };
-        const IntonationGuessingGame = () => {
-            const [questions, setQuestions] = useState([]);
-            const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-            const [isAnswered, setIsAnswered] = useState(false);
-            
-            useEffect(() => { setQuestions(shuffleArray(intonationData)); }, []);
-            
-            const handleSelect = () => { if(!isAnswered) setIsAnswered(true); };
-            const nextQuestion = () => {
-                if (currentQuestionIndex === questions.length - 1) {
-                    // Do nothing, button will be disabled
-                } else {
-                    setCurrentQuestionIndex(prev => prev + 1);
-                    setIsAnswered(false);
-                }
-            };
-
-            if (questions.length === 0) return null;
-            const currentQuestion = questions[currentQuestionIndex];
-
-            return (
-                <div className="w-full bg-white rounded-xl shadow-lg p-6 md:p-8 text-center">
-                    <h1 className="text-2xl font-bold text-gray-800 mb-2">Activity 9: Intonation Guessing Game</h1>
-                    <p className="text-gray-600 mb-6">Listen to the sentence and decide if the intonation is rising or falling.</p>
-                    <div className="p-8 rounded-lg shadow-inner bg-gray-50">
-                        <p className="text-3xl font-bold mb-6">"{currentQuestion.sentence}"</p>
-                        <p className="text-gray-500 mb-4 italic">(Teacher reads the sentence with the appropriate intonation)</p>
-                        <div className="flex justify-center gap-8">
-                            <button onClick={() => handleSelect(true)} disabled={isAnswered} className={`p-4 text-4xl font-bold rounded-lg shadow-sm transition-colors ${isAnswered && currentQuestion.rising ? 'bg-green-200 ring-2 ring-green-500' : 'bg-white hover:bg-gray-100 disabled:bg-gray-200'}`}>↗</button>
-                            <button onClick={() => handleSelect(false)} disabled={isAnswered} className={`p-4 text-4xl font-bold rounded-lg shadow-sm transition-colors ${isAnswered && currentQuestion.falling ? 'bg-green-200 ring-2 ring-green-500' : 'bg-white hover:bg-gray-100 disabled:bg-gray-200'}`}>↘</button>
-                        </div>
-                         {isAnswered && (
-                            <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-                                <p className="text-gray-700">This is a <strong>{currentQuestion.type}</strong>, which typically has <strong>{currentQuestion.rising ? 'rising' : 'falling'}</strong> intonation.</p>
+                        <!-- Activity 2: Intonation Quiz -->
+                        <div>
+                            <h3 class="text-xl font-semibold mb-2">Intonation Quiz (Quiz ngữ điệu)</h3>
+                            <p class="text-gray-600 mb-4">Đọc câu và quyết định ngữ điệu cuối câu là lên giọng hay xuống giọng.</p>
+                            <div class="p-4 bg-white rounded-lg shadow-inner">
+                                <div class="text-center mb-4">
+                                    <p id="intonation-sentence-display" class="text-2xl font-semibold mb-4 p-4 bg-indigo-100 rounded-lg"></p>
+                                </div>
+                                <div class="flex justify-center space-x-4">
+                                    <button class="px-6 py-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition" onclick="checkIntonation('rising')">Lên giọng ↗</button>
+                                    <button class="px-6 py-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition" onclick="checkIntonation('falling')">Xuống giọng ↘</button>
+                                </div>
+                                <div id="intonation-feedback" class="feedback mt-4 p-3 rounded-lg text-center font-semibold text-white opacity-0"></div>
+                                <div class="text-center mt-4">
+                                    <button id="next-intonation-btn" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">Câu khác</button>
+                                </div>
                             </div>
-                        )}
+                        </div>
+
+                        <!-- Activity 3: Listening for Weak Forms -->
+                        <div>
+                            <h3 class="text-xl font-semibold mb-2">Listening for Weak Forms (Nghe dạng yếu)</h3>
+                            <div class="p-4 bg-white rounded-lg shadow-inner">
+                                <p class="mb-4 text-gray-600">Nghe câu và gõ lại chính xác những gì bạn nghe được.</p>
+                                <button class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition mb-4" id="play-weak-form-sentence">Nghe câu</button>
+                                <div class="flex items-center">
+                                    <input type="text" id="weak-form-input" class="w-full p-2 border rounded-md" placeholder="Gõ câu bạn nghe được ở đây...">
+                                    <button class="ml-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600" id="check-weak-form-btn">Kiểm tra</button>
+                                </div>
+                                <p id="weak-form-feedback" class="mt-2 font-semibold"></p>
+                                 <div class="text-center mt-4">
+                                    <button id="next-weak-form-btn" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">Câu khác</button>
+                                </div>
+                            </div>
+                        </div>
+                     </div>
+                </section>
+                
+                <!-- PART 4: WRAP-UP -->
+                <section>
+                    <h2 class="text-2xl font-semibold text-gray-800 border-l-4 border-indigo-500 pl-4 mb-6">Phần 4: Tổng kết (10 phút)</h2>
+                    <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-6">
+                        <h3 class="text-xl font-semibold text-indigo-800 mb-4">Gợi ý tự luyện tập</h3>
+                        <ul class="list-disc list-inside space-y-2 text-gray-700">
+                            <li><strong>Shadowing:</strong> Nghe và lặp lại theo người bản xứ (phim, podcast). Bắt chước cả nhịp điệu và ngữ điệu.</li>
+                            <li><strong>Ghi âm:</strong> Tự ghi âm giọng nói của mình và so sánh với file audio gốc để nhận ra sự khác biệt.</li>
+                            <li><strong>Từ điển:</strong> Luôn tra phiên âm của từ mới. Các từ điển online như Oxford, Cambridge đều có phát âm.</li>
+                            <li><strong>Kiên trì:</strong> Phát âm cần thời gian để cải thiện. Hãy luyện tập đều đặn mỗi ngày!</li>
+                        </ul>
                     </div>
-                     <button onClick={nextQuestion} disabled={!isAnswered || currentQuestionIndex === questions.length - 1} className="mt-6 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg transition-all disabled:bg-gray-300">
-                        {currentQuestionIndex === questions.length - 1 ? 'Finished' : 'Next Question'}
-                    </button>
-                </div>
-            );
+                </section>
+            </main>
+
+            <footer class="text-center mt-10 pt-6 border-t border-gray-200">
+                <p class="text-gray-500">Chúc bạn học tốt và tự tin hơn với phát âm tiếng Anh!</p>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        // JavaScript for Interactivity
+        function speak(text, rate = 0.9) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-US';
+                utterance.rate = rate;
+                window.speechSynthesis.speak(utterance);
+            } else {
+                alert('Trình duyệt của bạn không hỗ trợ tính năng phát âm. Vui lòng thử trên Chrome hoặc Edge.');
+            }
+        }
+
+        function shuffleArray(array) {
+            let newArr = [...array];
+            for (let i = newArr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+            }
+            return newArr;
+        }
+
+        // --- Scoreboard Logic ---
+        let students = [];
+        const addStudentBtn = document.getElementById('add-student-btn');
+        const studentNameInput = document.getElementById('student-name-input');
+        const leftScoreboardContent = document.getElementById('left-scoreboard-content');
+        const rightScoreboardContent = document.getElementById('right-scoreboard-content');
+
+        function renderScoreboards() {
+            leftScoreboardContent.innerHTML = '';
+            rightScoreboardContent.innerHTML = '';
+            students.forEach((student, index) => {
+                const entry = document.createElement('div');
+                entry.className = 'student-entry';
+                
+                const nameEl = document.createElement('span');
+                nameEl.className = 'student-name';
+                nameEl.textContent = student.name;
+
+                const scoreEl = document.createElement('span');
+                scoreEl.className = 'student-score';
+                scoreEl.id = `score-${student.id}`;
+                scoreEl.textContent = student.score;
+
+                const plusBtn = document.createElement('button');
+                plusBtn.className = 'score-btn';
+                plusBtn.textContent = '+';
+                plusBtn.onclick = () => incrementScore(student.id);
+
+                entry.appendChild(nameEl);
+                entry.appendChild(scoreEl);
+                entry.appendChild(plusBtn);
+
+                if (index % 2 === 0) {
+                    leftScoreboardContent.appendChild(entry);
+                } else {
+                    rightScoreboardContent.appendChild(entry);
+                }
+            });
+        }
+
+        function incrementScore(studentId) {
+            const student = students.find(s => s.id === studentId);
+            if (student) {
+                student.score++;
+                renderScoreboards();
+            }
+        }
+
+        addStudentBtn.addEventListener('click', () => {
+            const name = studentNameInput.value.trim();
+            if (name && !students.find(s => s.name === name)) {
+                students.push({ id: Date.now(), name: name, score: 0 });
+                studentNameInput.value = '';
+                renderScoreboards();
+            }
+        });
+        studentNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addStudentBtn.click();
+            }
+        });
+
+
+        // --- Sound Quiz Logic ---
+        const soundQuizData = [
+            { word: 'team', prompt: 'nguyên âm', options: ['iː', 'ɪ', 'e', 'æ'], correct: 'iː' }, { word: 'sit', prompt: 'nguyên âm', options: ['iː', 'ɪ', 'e', 'æ'], correct: 'ɪ' }, { word: 'blue', prompt: 'nguyên âm', options: ['uː', 'ʊ', 'ɒ', 'ɔː'], correct: 'uː' }, { word: 'book', prompt: 'nguyên âm', options: ['uː', 'ʊ', 'ɒ', 'ɔː'], correct: 'ʊ' }, { word: 'cat', prompt: 'nguyên âm', options: ['æ', 'ʌ', 'ɑː', 'e'], correct: 'æ' }, { word: 'bed', prompt: 'nguyên âm', options: ['æ', 'ʌ', 'ɑː', 'e'], correct: 'e' }, { word: 'car', prompt: 'nguyên âm', options: ['æ', 'ʌ', 'ɑː', 'ɒ'], correct: 'ɑː' }, { word: 'cup', prompt: 'nguyên âm', options: ['æ', 'ʌ', 'ɑː', 'ɒ'], correct: 'ʌ' }, { word: 'hot', prompt: 'nguyên âm', options: ['ɒ', 'ɔː', 'əʊ', 'aʊ'], correct: 'ɒ' }, { word: 'ball', prompt: 'nguyên âm', options: ['ɒ', 'ɔː', 'əʊ', 'aʊ'], correct: 'ɔː' }, { word: 'bird', prompt: 'nguyên âm', options: ['ɜː', 'ə', 'ɪə', 'eə'], correct: 'ɜː' }, { word: 'say', prompt: 'nguyên âm', options: ['eɪ', 'aɪ', 'ɔɪ', 'əʊ'], correct: 'eɪ' }, { word: 'my', prompt: 'nguyên âm', options: ['eɪ', 'aɪ', 'ɔɪ', 'əʊ'], correct: 'aɪ' }, { word: 'boy', prompt: 'nguyên âm', options: ['eɪ', 'aɪ', 'ɔɪ', 'əʊ'], correct: 'ɔɪ' }, { word: 'go', prompt: 'nguyên âm', options: ['əʊ', 'aʊ', 'uː', 'ɒ'], correct: 'əʊ' }, { word: 'now', prompt: 'nguyên âm', options: ['əʊ', 'aʊ', 'uː', 'ɒ'], correct: 'aʊ' }, { word: 'here', prompt: 'nguyên âm', options: ['ɪə', 'eə', 'ɜː', 'aɪ'], correct: 'ɪə' }, { word: 'hair', prompt: 'nguyên âm', options: ['ɪə', 'eə', 'ɜː', 'aɪ'], correct: 'eə' }, { word: 'pen', prompt: 'phụ âm đầu', options: ['p', 'b', 't', 'd'], correct: 'p' }, { word: 'bed', prompt: 'phụ âm đầu', options: ['p', 'b', 't', 'd'], correct: 'b' }, { word: 'tea', prompt: 'phụ âm đầu', options: ['t', 'd', 'k', 'g'], correct: 't' }, { word: 'dog', prompt: 'phụ âm đầu', options: ['t', 'd', 'k', 'g'], correct: 'd' }, { word: 'key', prompt: 'phụ âm đầu', options: ['k', 'g', 'f', 'v'], correct: 'k' }, { word: 'go', prompt: 'phụ âm đầu', options: ['k', 'g', 'f', 'v'], correct: 'g' }, { word: 'think', prompt: 'phụ âm đầu', options: ['θ', 'ð', 's', 'z'], correct: 'θ' }, { word: 'this', prompt: 'phụ âm đầu', options: ['θ', 'ð', 's', 'z'], correct: 'ð' }, { word: 'see', prompt: 'phụ âm đầu', options: ['s', 'z', 'ʃ', 'ʒ'], correct: 's' }, { word: 'zoo', prompt: 'phụ âm đầu', options: ['s', 'z', 'ʃ', 'ʒ'], correct: 'z' }, { word: 'she', prompt: 'phụ âm đầu', options: ['ʃ', 'ʒ', 'tʃ', 'dʒ'], correct: 'ʃ' }, { word: 'chair', prompt: 'phụ âm đầu', options: ['ʃ', 'ʒ', 'tʃ', 'dʒ'], correct: 'tʃ' }, { word: 'jam', prompt: 'phụ âm đầu', options: ['ʃ', 'ʒ', 'tʃ', 'dʒ'], correct: 'dʒ' }, { word: 'sing', prompt: 'phụ âm cuối', options: ['m', 'n', 'ŋ', 'g'], correct: 'ŋ' }
+        ];
+        let shuffledQuizData, currentQuizIndex;
+        const soundQuizPromptEl = document.getElementById('sound-quiz-prompt'), soundQuizWordEl = document.getElementById('sound-quiz-word'), playSoundQuizBtn = document.getElementById('play-sound-quiz-btn'), soundQuizOptionsContainer = document.getElementById('sound-quiz-options'), soundQuizFeedbackEl = document.getElementById('sound-quiz-feedback'), nextSoundQuizBtn = document.getElementById('next-sound-quiz-btn');
+
+        function setupSoundQuiz() {
+            if (!shuffledQuizData) {
+                shuffledQuizData = shuffleArray([...soundQuizData]);
+                currentQuizIndex = 0;
+            }
+            
+            const currentSoundQuizItem = shuffledQuizData[currentQuizIndex];
+            soundQuizPromptEl.textContent = `Chọn ký tự phiên âm cho ${currentSoundQuizItem.prompt} trong từ:`;
+            soundQuizWordEl.textContent = currentSoundQuizItem.word;
+            soundQuizOptionsContainer.innerHTML = '';
+            soundQuizFeedbackEl.textContent = '';
+            soundQuizFeedbackEl.style.opacity = 0;
+            nextSoundQuizBtn.disabled = true;
+
+            const shuffledOptions = shuffleArray([...currentSoundQuizItem.options]);
+            shuffledOptions.forEach(option => {
+                const button = document.createElement('button');
+                button.innerHTML = `<span class="text-3xl">${option}</span>`;
+                button.className = "ipa-option p-4 bg-white border-2 border-gray-300 rounded-lg hover:bg-amber-400 hover:text-white transition focus:outline-none focus:ring-2 focus:ring-indigo-500";
+                button.onclick = () => checkSoundQuizAnswer(option, button, currentSoundQuizItem);
+                soundQuizOptionsContainer.appendChild(button);
+            });
+            speak(currentSoundQuizItem.word);
+        }
+        playSoundQuizBtn.onclick = () => speak(shuffledQuizData[currentQuizIndex].word);
+        nextSoundQuizBtn.onclick = () => {
+            currentQuizIndex++;
+            if (currentQuizIndex >= shuffledQuizData.length) {
+                soundQuizPromptEl.textContent = "Bạn đã hoàn thành tất cả các câu hỏi!";
+                soundQuizWordEl.textContent = "🎉";
+                soundQuizOptionsContainer.innerHTML = '';
+                soundQuizFeedbackEl.style.opacity = 0;
+                nextSoundQuizBtn.disabled = true;
+                nextSoundQuizBtn.textContent = "Đã hoàn thành";
+                return;
+            }
+            setupSoundQuiz();
         };
 
-        function App() {
-            const [teams, setTeams] = useState([]);
-            const handleTeamsUpdate = (newTeams) => setTeams(newTeams);
-            const handleScoreChange = (teamIndex, delta) => setTeams(currentTeams => currentTeams.map((team, i) => i === teamIndex ? { ...team, score: Math.max(0, team.score + delta) } : team));
-            const useStickyLayout = teams.length === 2 && window.innerWidth >= 1280;
+        function checkSoundQuizAnswer(selectedOption, buttonElement, currentItem) {
+            const allButtons = soundQuizOptionsContainer.querySelectorAll('button');
+            allButtons.forEach(btn => btn.disabled = true);
+            soundQuizFeedbackEl.style.opacity = 1;
+            if (selectedOption === currentItem.correct) {
+                soundQuizFeedbackEl.textContent = 'Chính xác! 🎉';
+                soundQuizFeedbackEl.className = 'feedback mt-6 p-3 rounded-lg text-center font-semibold text-white bg-green-500';
+                buttonElement.classList.add('correct');
+            } else {
+                soundQuizFeedbackEl.textContent = `Sai rồi! Đáp án đúng là /${currentItem.correct}/.`;
+                soundQuizFeedbackEl.className = 'feedback mt-6 p-3 rounded-lg text-center font-semibold text-white bg-red-500';
+                buttonElement.classList.add('wrong');
+                allButtons.forEach(btn => { if (btn.textContent === currentItem.correct) { btn.classList.add('correct'); } });
+            }
+            nextSoundQuizBtn.disabled = false;
+        }
+
+        // --- Word Stress Quiz Logic ---
+        const stressData = [
+            { word: 'teacher', syllables: ['tea', 'cher'], stressedIndex: 0 }, { word: 'computer', syllables: ['com', 'pu', 'ter'], stressedIndex: 1 }, { word: 'banana', syllables: ['ba', 'na', 'na'], stressedIndex: 1 }, { word: 'important', syllables: ['im', 'por', 'tant'], stressedIndex: 1 }, { word: 'beautiful', syllables: ['beau', 'ti', 'ful'], stressedIndex: 0 }, { word: 'delicious', syllables: ['de', 'li', 'cious'], stressedIndex: 1 }, { word: 'exercise', syllables: ['ex', 'er', 'cise'], stressedIndex: 0 }, { word: 'understand', syllables: ['un', 'der', 'stand'], stressedIndex: 2 }, { word: 'photograph', syllables: ['pho', 'to', 'graph'], stressedIndex: 0 }, { word: 'photography', syllables: ['pho', 'tog', 'ra', 'phy'], stressedIndex: 1 }, { word: 'Japanese', syllables: ['Ja', 'pa', 'nese'], stressedIndex: 2 }, { word: 'information', syllables: ['in', 'for', 'ma', 'tion'], stressedIndex: 2 }, { word: 'university', syllables: ['u', 'ni', 'ver', 'si', 'ty'], stressedIndex: 2 }, { word: 'communication', syllables: ['com', 'mu', 'ni', 'ca', 'tion'], stressedIndex: 3 }, { word: 'possibility', syllables: ['pos', 'si', 'bil', 'i', 'ty'], stressedIndex: 2 }, { word: 'economic', syllables: ['e', 'co', 'nom', 'ic'], stressedIndex: 2 }, { word: 'application', syllables: ['ap', 'pli', 'ca', 'tion'], stressedIndex: 2 }, { word: 'politics', syllables: ['pol', 'i', 'tics'], stressedIndex: 0 }, { word: 'political', syllables: ['po', 'lit', 'i', 'cal'], stressedIndex: 1 }, { word: 'celebrate', syllables: ['cel', 'e', 'brate'], stressedIndex: 0 }
+        ];
+        let shuffledStressData, currentStressIndex;
+        const stressQuizContainer = document.getElementById('word-stress-quiz'), stressFeedbackDiv = document.getElementById('stress-feedback'), nextStressBtn = document.getElementById('next-stress-word');
+
+        function setupStressQuiz() {
+            if (!shuffledStressData) {
+                shuffledStressData = shuffleArray([...stressData]);
+                currentStressIndex = 0;
+            }
             
-            return (
-                <div id="page-grid-container">
-                    <div id="left-sidebar">{useStickyLayout && teams[0] && <StickyTeamCard team={teams[0]} index={0} onScoreChange={handleScoreChange} />}</div>
-                    <div id="main-content-wrapper" className="w-full max-w-3xl mx-auto space-y-8">
-                         <TeamSplitter onTeamsUpdate={handleTeamsUpdate} />
-                         {!useStickyLayout && teams.length > 0 && (
-                            <div className="w-full bg-white rounded-xl shadow-lg p-6 md:p-8 text-center">
-                                <div className={`mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 text-left`}>{teams.map((team, index) => <TeamCard key={index} team={team} index={index} onScoreChange={handleScoreChange} />)}</div>
-                            </div>
-                         )}
-                        <SoundSorterGame />
-                        <DiphthongHunter />
-                        <MinimalPairMemoryGame />
-                        <QuoteDecoder />
-                        <OddOneOutGame />
-                        <FindTheMistakeGame />
-                        <SyllableCountingGame />
-                        <StressPatternMatch />
-                        <IntonationGuessingGame />
-                    </div>
-                    <div id="right-sidebar">{useStickyLayout && teams[1] && <StickyTeamCard team={teams[1]} index={1} onScoreChange={handleScoreChange} />}</div>
-                </div>
-            );
+            const currentStressWord = shuffledStressData[currentStressIndex];
+            stressQuizContainer.innerHTML = '';
+            stressFeedbackDiv.textContent = '';
+            stressFeedbackDiv.style.opacity = 0;
+            nextStressBtn.disabled = true;
+
+            currentStressWord.syllables.forEach((syllable, index) => {
+                const span = document.createElement('span');
+                span.textContent = syllable;
+                span.className = 'syllable px-2 py-1 rounded-md';
+                span.style.pointerEvents = 'auto';
+                span.onclick = () => checkStressAnswer(index, currentStressWord);
+                stressQuizContainer.appendChild(span);
+            });
+            speak(currentStressWord.word);
         }
         
-        const container = document.getElementById('root');
-        const root = ReactDOM.createRoot(container);
-        root.render(<App />);
+        function checkStressAnswer(selectedIndex, currentItem) {
+            const syllables = stressQuizContainer.querySelectorAll('.syllable');
+            syllables.forEach(s => s.style.pointerEvents = 'none');
+            stressFeedbackDiv.style.opacity = 1;
+            if (selectedIndex === currentItem.stressedIndex) {
+                stressFeedbackDiv.textContent = 'Tuyệt vời! Đó chính là trọng âm. 👍';
+                stressFeedbackDiv.className = 'feedback mt-4 p-3 rounded-lg text-center font-semibold text-white bg-green-500';
+            } else {
+                stressFeedbackDiv.textContent = `Chưa đúng. Nghe lại từ và thử lại nhé!`;
+                stressFeedbackDiv.className = 'feedback mt-4 p-3 rounded-lg text-center font-semibold text-white bg-red-500';
+                speak(currentItem.word);
+                setTimeout(() => {
+                    syllables.forEach(s => s.style.pointerEvents = 'auto');
+                }, 1500);
+            }
+             if (selectedIndex === currentItem.stressedIndex) nextStressBtn.disabled = false;
+        }
+        nextStressBtn.addEventListener('click', () => {
+            currentStressIndex++;
+            if (currentStressIndex >= shuffledStressData.length) {
+                stressQuizContainer.innerHTML = `<p class="text-2xl">🎉 Bạn đã hoàn thành phần này! 🎉</p>`;
+                stressFeedbackDiv.style.opacity = 0;
+                nextStressBtn.disabled = true;
+                nextStressBtn.textContent = "Đã hoàn thành";
+                return;
+            }
+            setupStressQuiz();
+        });
+
+        // --- Linking Sounds Logic (EXPANDED) ---
+        const linkingData = [
+            { plain: "First of all", linked: "Firs<span class='ipa'>t‿of‿</span>all" }, { plain: "Come on in", linked: "Come<span class='ipa'>‿</span>o<span class='ipa'>n‿</span>in" }, { plain: "I need a bit of it", linked: "I nee<span class='ipa'>d‿</span>a bi<span class='ipa'>t‿</span>o<span class='ipa'>f‿</span>it" }, { plain: "She is an old friend", linked: "She<span class='ipa'>‿</span>i<span class='ipa'>s‿</span>a<span class='ipa'>n‿</span>ol<span class='ipa'>d‿</span>friend" }, { plain: "What a good idea", linked: "Wha<span class='ipa'>t‿</span>a goo<span class='ipa'>d‿</span>idea" }, { plain: "Pick it up", linked: "Pic<span class='ipa'>k‿</span>i<span class='ipa'>t‿</span>up" }, { plain: "Turn it off", linked: "Tur<span class='ipa'>n‿</span>i<span class='ipa'>t‿</span>off" }, { plain: "I am happy", linked: "I<span class='ipa'>‿(j)</span>am happy" }, { plain: "He is here", linked: "He<span class='ipa'>‿(j)</span>is here" }, { plain: "Go away", linked: "Go<span class='ipa'>‿(w)</span>away" }, { plain: "Do it now", linked: "Do<span class='ipa'>‿(w)</span>it now" }, { plain: "Read a book", linked: "Rea<span class='ipa'>d‿</span>a book" }, { plain: "It's on the table", linked: "It'<span class='ipa'>s‿</span>on the table" }, { plain: "Is it an apple?", linked: "I<span class='ipa'>s‿</span>i<span class='ipa'>t‿</span>a<span class='ipa'>n‿</span>apple?" }, { plain: "My name is Alex", linked: "My name<span class='ipa'>‿</span>is Alex" }, { plain: "This is an example", linked: "Thi<span class='ipa'>s‿</span>i<span class='ipa'>s‿</span>a<span class='ipa'>n‿</span>example" }, { plain: "She has a lot of energy", linked: "She ha<span class='ipa'>s‿</span>a lo<span class='ipa'>t‿</span>o<span class='ipa'>f‿</span>energy" }, { plain: "Can I have a glass of water?", linked: "Ca<span class='ipa'>n‿</span>I ha<span class='ipa'>v‿</span>a glas<span class='ipa'>s‿</span>of water?" }, { plain: "It's a nice evening", linked: "It'<span class='ipa'>s‿</span>a nic<span class='ipa'>e‿</span>evening" }, { plain: "You are right", linked: "You<span class='ipa'>‿(w)</span>are right" }
+        ];
+        let currentLinkingIndex = 0;
+        const linkingDisplay = document.getElementById('linking-sentence-display'), showLinkingBtn = document.getElementById('show-linking-btn'), nextLinkingBtn = document.getElementById('next-linking-btn'), playLinkingBtn = document.getElementById('play-linking-btn');
+
+        function setupLinking() {
+            linkingDisplay.innerHTML = linkingData[currentLinkingIndex].plain;
+        }
+        playLinkingBtn.onclick = () => { speak(linkingData[currentLinkingIndex].plain); };
+        showLinkingBtn.onclick = () => { linkingDisplay.innerHTML = linkingData[currentLinkingIndex].linked; };
+        nextLinkingBtn.onclick = () => { currentLinkingIndex = (currentLinkingIndex + 1) % linkingData.length; setupLinking(); };
+
+        // --- Intonation Quiz Logic ---
+        const intonationData = [
+            { sentence: "What's your name?", type: 'falling' }, { sentence: "Are you a student?", type: 'rising' }, { sentence: "Where do you live?", type: 'falling' }, { sentence: "Is this your book?", type: 'rising' }, { sentence: "He lives in London.", type: 'falling' }, { sentence: "Can you help me?", type: 'rising' }, { sentence: "How old are you?", type: 'falling' }, { sentence: "Do you like coffee?", type: 'rising' }, { sentence: "I'm going to the store.", type: 'falling' }, { sentence: "Have you finished your homework?", type: 'rising' }, { sentence: "Why are you late?", type: 'falling' }, { sentence: "Would you like some water?", type: 'rising' }, { sentence: "This is my new car.", type: 'falling' }, { sentence: "Did you see that?", type: 'rising' }, { sentence: "When does the movie start?", type: 'falling' }, { sentence: "It's a beautiful day.", type: 'falling' }, { sentence: "Does he play football?", type: 'rising' }, { sentence: "Who is that person?", type: 'falling' }, { sentence: "Can I have some more?", type: 'rising' }, { sentence: "The train arrives at ten.", type: 'falling' }, { sentence: "Are we there yet?", type: 'rising' }, { sentence: "What time is it?", type: 'falling' }, { sentence: "Do you want to go out?", type: 'rising' }, { sentence: "I really like your shoes.", type: 'falling' }, { sentence: "Is she coming to the party?", type: 'rising' }, { sentence: "How was your weekend?", type: 'falling' }, { sentence: "Should I call him?", type: 'rising' }, { sentence: "That's an interesting idea.", type: 'falling' }, { sentence: "Have they left already?", type: 'rising' }, { sentence: "I'll see you tomorrow.", type: 'falling' }
+        ];
+        let shuffledIntonationData, currentIntonationIndex;
+        const intonationSentenceDisplay = document.getElementById('intonation-sentence-display'), intonationFeedbackEl = document.getElementById('intonation-feedback'), nextIntonationBtn = document.getElementById('next-intonation-btn');
+
+        function setupIntonationQuiz() {
+            if (!shuffledIntonationData) {
+                shuffledIntonationData = shuffleArray([...intonationData]);
+                currentIntonationIndex = 0;
+            }
+            
+            const currentIntonationItem = shuffledIntonationData[currentIntonationIndex];
+            intonationSentenceDisplay.textContent = currentIntonationItem.sentence;
+            intonationFeedbackEl.textContent = '';
+            intonationFeedbackEl.style.opacity = 0;
+            const allButtons = intonationFeedbackEl.parentElement.querySelectorAll('button');
+            allButtons.forEach(btn => btn.disabled = false);
+            nextIntonationBtn.disabled = true;
+        }
+
+        function checkIntonation(type) {
+            const currentIntonationItem = shuffledIntonationData[currentIntonationIndex];
+            const allButtons = intonationFeedbackEl.parentElement.querySelectorAll('button');
+            allButtons.forEach(btn => btn.disabled = true);
+            intonationFeedbackEl.style.opacity = 1;
+            if (type === currentIntonationItem.type) {
+                intonationFeedbackEl.textContent = 'Chính xác!';
+                intonationFeedbackEl.className = 'feedback mt-4 p-3 rounded-lg text-center font-semibold text-white bg-green-500';
+            } else {
+                intonationFeedbackEl.textContent = `Chưa đúng. Đây là câu ${currentIntonationItem.type === 'rising' ? 'hỏi Yes/No (lên giọng)' : 'trần thuật/hỏi Wh- (xuống giọng)'}.`;
+                intonationFeedbackEl.className = 'feedback mt-4 p-3 rounded-lg text-center font-semibold text-white bg-red-500';
+            }
+            nextIntonationBtn.disabled = false;
+        }
+        nextIntonationBtn.addEventListener('click', () => {
+            currentIntonationIndex++;
+            if (currentIntonationIndex >= shuffledIntonationData.length) {
+                intonationSentenceDisplay.textContent = "🎉 Bạn đã hoàn thành phần này! 🎉";
+                intonationFeedbackEl.style.opacity = 0;
+                nextIntonationBtn.disabled = true;
+                nextIntonationBtn.textContent = "Đã hoàn thành";
+                const choiceButtons = intonationFeedbackEl.parentElement.querySelectorAll('button:not(#next-intonation-btn)');
+                choiceButtons.forEach(btn => btn.disabled = true);
+                return;
+            }
+            setupIntonationQuiz();
+        });
+
+        // --- Weak Form Listening ---
+        const weakFormData = [
+            { sentence: "I can go to the shop for a bit", text: "I can go to the shop for a bit" }, { sentence: "What do you want", text: "What do you want" }, { sentence: "She was here a minute ago", text: "She was here a minute ago" }, { sentence: "A cup of tea please", text: "A cup of tea please" }, { sentence: "Where are you from", text: "Where are you from" }, { sentence: "I'd like a piece of cake", text: "I'd like a piece of cake" }, { sentence: "He's taller than me", text: "He's taller than me" }, { sentence: "We can meet at the station", text: "We can meet at the station" }, { sentence: "This is for you", text: "This is for you" }, { sentence: "Fish and chips", text: "Fish and chips" }, { sentence: "I must go now", text: "I must go now" }, { sentence: "Tell them to wait", text: "Tell them to wait" }, { sentence: "He has a lot of books", text: "He has a lot of books" }, { sentence: "She should be here soon", text: "She should be here soon" }, { sentence: "It was a good film", text: "It was a good film" }, { sentence: "I'm looking for a new job", text: "I'm looking for a new job" }, { sentence: "What are you doing", text: "What are you doing" }, { sentence: "I went to bed at ten", text: "I went to bed at ten" }, { sentence: "It's a quarter to three", text: "It's a quarter to three" }, { sentence: "Can I have some of that", text: "Can I have some of that" }, { sentence: "The book is on the table", text: "The book is on the table" }, { sentence: "He's a friend of mine", text: "He's a friend of mine" }, { sentence: "I have to go", text: "I have to go" }, { sentence: "She's from Canada", text: "She's from Canada" }, { sentence: "I'll be there in a minute", text: "I'll be there in a minute" }, { sentence: "He can speak English", text: "He can speak English" }, { sentence: "I'm at home", text: "I'm at home" }, { sentence: "Bread and butter", text: "Bread and butter" }, { sentence: "I'll ask her later", text: "I'll ask her later" }, { sentence: "There are four of them", text: "There are four of them" }
+        ];
+        let shuffledWeakFormData, currentWeakFormIndex;
+        const playWeakFormBtn = document.getElementById('play-weak-form-sentence'), weakFormInput = document.getElementById('weak-form-input'), checkWeakFormBtn = document.getElementById('check-weak-form-btn'), weakFormFeedback = document.getElementById('weak-form-feedback'), nextWeakFormBtn = document.getElementById('next-weak-form-btn');
+
+        function setupWeakFormQuiz() {
+            if (!shuffledWeakFormData) {
+                shuffledWeakFormData = shuffleArray([...weakFormData]);
+                currentWeakFormIndex = 0;
+            }
+            
+            weakFormInput.value = '';
+            weakFormInput.placeholder = "Gõ câu bạn nghe được ở đây...";
+            weakFormFeedback.textContent = '';
+            checkWeakFormBtn.disabled = false;
+            nextWeakFormBtn.disabled = true;
+        }
+        playWeakFormBtn.onclick = () => {
+            const currentWeakFormSentence = shuffledWeakFormData[currentWeakFormIndex];
+            speak(currentWeakFormSentence.sentence, 0.85);
+        };
+        checkWeakFormBtn.onclick = () => {
+            const currentWeakFormSentence = shuffledWeakFormData[currentWeakFormIndex];
+            const userInput = weakFormInput.value.trim().replace(/[.,?]/g, '').toLowerCase();
+            const correctAnswer = currentWeakFormSentence.text.replace(/[.,?]/g, '').toLowerCase();
+            if (userInput === correctAnswer) {
+                weakFormFeedback.textContent = 'Tuyệt vời, bạn đã nghe đúng!';
+                weakFormFeedback.style.color = 'var(--correct-color)';
+            } else {
+                weakFormFeedback.textContent = `Chưa chính xác. Câu đúng là: "${currentWeakFormSentence.text}"`;
+                weakFormFeedback.style.color = 'var(--wrong-color)';
+            }
+            checkWeakFormBtn.disabled = true;
+            nextWeakFormBtn.disabled = false;
+        };
+        nextWeakFormBtn.addEventListener('click', () => {
+            currentWeakFormIndex++;
+            if (currentWeakFormIndex >= shuffledWeakFormData.length) {
+                weakFormInput.placeholder = "Bạn đã hoàn thành phần này!";
+                weakFormInput.disabled = true;
+                playWeakFormBtn.disabled = true;
+                checkWeakFormBtn.disabled = true;
+                nextWeakFormBtn.disabled = true;
+                nextWeakFormBtn.textContent = "Đã hoàn thành";
+                return;
+            }
+            setupWeakFormQuiz();
+        });
+        
+        // Initial setup when the page loads
+        window.onload = () => {
+            setupSoundQuiz();
+            setupStressQuiz();
+            setupLinking();
+            setupIntonationQuiz();
+            setupWeakFormQuiz();
+        };
+
     </script>
+
 </body>
 </html>
