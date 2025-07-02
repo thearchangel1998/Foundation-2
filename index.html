@@ -34,7 +34,10 @@
         const ipaQuotesData = [ { quote: "The only thing we have to fear is fear itself.", author: "Franklin D. Roosevelt", ipa: "/ði ˈoʊnli θɪŋ wi hæv tu fɪər ɪz fɪər ɪtˈsɛlf./" }, { quote: "To be, or not to be, that is the question.", author: "William Shakespeare", ipa: "/tu bi, ɔːr nɒt tu bi, ðæt ɪz ðə ˈkwɛstʃən./" }, { quote: "I think, therefore I am.", author: "René Descartes", ipa: "/aɪ θɪŋk, ˈðɛərˌfɔːr aɪ æm./" }, { quote: "That's one small step for a man, one giant leap for mankind.", author: "Neil Armstrong", ipa: "/ðæts wʌn smɔːl stɛp fɔːr ə mæn, wʌn ˈdʒaɪənt liːp fɔːr mænˈkaɪnd./" }, { quote: "The journey of a thousand miles begins with a single step.", author: "Lao Tzu", ipa: "/ðə ˈdʒɜːrni əv ə ˈθaʊzənd maɪlz bɪˈɡɪnz wɪð ə ˈsɪŋɡəl stɛp./" }, { quote: "All that glitters is not gold.", author: "William Shakespeare", ipa: "/ɔːl ðæt ˈɡlɪtərz ɪz nɒt ɡoʊld./" } ];
         const oddOneOutData = [ { words: ['seat', 'beat', 'feet', 'sit'], odd: 'sit', reason: 'Has the short vowel /ɪ/, while the others have the long vowel /i:/.' }, { words: ['say', 'make', 'late', 'cat'], odd: 'cat', reason: 'Has the vowel /æ/, while the others have the diphthong /eɪ/.' }, { words: ['back', 'lap', 'race', 'bag'], odd: 'bag', reason: 'Ends with a voiced consonant /g/, while the others end with voiceless consonants.' }, { words: ['fan', 'very', 'vine', 'voice'], odd: 'fan', reason: 'Starts with a voiceless consonant /f/, while the others start with the voiced /v/.' }, { words: ['cut', 'sun', 'luck', 'put'], odd: 'put', reason: 'Has the vowel /ʊ/, while the others have the vowel /ʌ/.' }, { words: ['hour', 'honor', 'heir', 'horse'], odd: 'horse', reason: 'The initial /h/ is pronounced, unlike in the other words.' }, { words: ['three', 'through', 'think', 'this'], odd: 'this', reason: 'Starts with a voiced /ð/ sound, while the others start with the voiceless /θ/.' }, { words: ['food', 'blue', 'shoe', 'good'], odd: 'good', reason: 'Has the short vowel /ʊ/, while the others have the long vowel /u:/.' } ];
         const findTheMistakeData = [ { word: 'sheep', mistake: '/ʃɪp/', incorrectSymbol: 'ɪ', correctIpa: '/ʃiːp/' }, { word: 'think', mistake: '/sɪŋk/', incorrectSymbol: 's', correctIpa: '/θɪŋk/' }, { word: 'bag', mistake: '/bæk/', incorrectSymbol: 'k', correctIpa: '/bæg/' }, { word: 'very', mistake: '/ˈfɛri/', incorrectSymbol: 'f', correctIpa: '/ˈvɛri/' }, { word: 'they', mistake: '/deɪ/', incorrectSymbol: 'd', correctIpa: '/ðeɪ/' }, { word: 'pleasure', mistake: '/ˈplɛʃər/', incorrectSymbol: 'ʃ', correctIpa: '/ˈplɛʒər/' }, { word: 'church', mistake: '/ʃɜːrtʃ/', incorrectSymbol: 'ʃ', correctIpa: '/tʃɜːrtʃ/' }, { word: 'juice', mistake: '/ʒuːs/', incorrectSymbol: 'ʒ', correctIpa: '/dʒuːs/' } ];
-
+        const syllableCountingData = [ { word: 'information', count: 4 }, { word: 'beautiful', count: 3 }, { word: 'computer', count: 3 }, { word: 'banana', count: 3 }, { word: 'syllable', count: 3 }, { word: 'interesting', count: 3 }, { word: 'family', count: 3 }, { word: 'usually', count: 3 }, { word: 'different', count: 2 }, { word: 'teacher', count: 2 }, { word: 'again', count: 2 }, { word: 'today', count: 2 }, { word: 'house', count: 1 }, { word: 'school', count: 1 }, { word: 'friend', count: 1 }, { word: 'speak', count: 1 } ];
+        const stressPatternData = [ { pattern: 'Ooo', words: ['beautiful', 'computer', 'yesterday', 'delicious'] }, { pattern: 'oOo', words: ['banana', 'important', 'remember', 'together'] }, { pattern: 'ooO', words: ['understand', 'Japanese', 'afternoon', 'seventeen'] }, { pattern: 'Oo', words: ['teacher', 'always', 'happy', 'finish'] }, { pattern: 'oO', words: ['again', 'before', 'explain', 'repeat'] }, { pattern: 'Oooo', words: ['interesting', 'vegetable', 'comfortable', 'usually'] }, { pattern: 'oOoo', words: ['photography', 'information', 'communication', 'nationality'] }, { pattern: 'ooOo', words: ['university', 'imagination', 'pronunciation', 'congratulations'] } ];
+        const intonationData = [ { sentence: "You're sure?", type: 'question', rising: true, falling: false }, { sentence: "It's cold.", type: 'statement', rising: false, falling: true }, { sentence: "She passed the exam?", type: 'surprise', rising: true, falling: false }, { sentence: "That's a great idea!", type: 'excitement', rising: false, falling: true }, { sentence: "Is it time to go?", type: 'question', rising: true, falling: false }, { sentence: "He's not coming.", type: 'statement', rising: false, falling: true }, { sentence: "You found it?", type: 'surprise', rising: true, falling: false }, { sentence: "I absolutely love it.", type: 'excitement', rising: false, falling: true } ];
+        
         const shuffleArray = (array) => { let c = array.length; while (c > 0) { let i = Math.floor(Math.random() * c); c--; [array[c], array[i]] = [array[i], array[c]]; } return array; };
         
         const TeamCard = ({ team, index, onScoreChange }) => (
@@ -348,7 +351,7 @@
 
             useEffect(() => { setQuestions(shuffleArray(oddOneOutData)); }, []);
 
-            if (questions.length === 0) return <div className="w-full bg-white rounded-xl shadow-lg p-6 md:p-8 text-center"><p>Loading...</p></div>;
+            if (questions.length === 0) return null;
             const currentQuestion = questions[currentQuestionIndex];
 
             return (
@@ -460,6 +463,159 @@
                 </div>
             );
         };
+        const SyllableCountingGame = () => {
+            const [questions, setQuestions] = useState([]);
+            const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+            const [isAnswered, setIsAnswered] = useState(false);
+            const [activeTeam, setActiveTeam] = useState(null);
+            const [timer, setTimer] = useState(0);
+            const [isTimerActive, setIsTimerActive] = useState(false);
+            const [times, setTimes] = useState({ 1: null, 2: null });
+            const timerRef = useRef(null);
+
+            useEffect(() => { if (isTimerActive) { timerRef.current = setInterval(() => setTimer(prev => prev + 1), 1000); } else { clearInterval(timerRef.current); } return () => clearInterval(timerRef.current); }, [isTimerActive]);
+
+            const startForTeam = (teamNumber) => {
+                setQuestions(shuffleArray(syllableCountingData));
+                setCurrentQuestionIndex(0);
+                setIsAnswered(false);
+                setTimer(0);
+                setActiveTeam(teamNumber);
+                setIsTimerActive(true);
+            };
+
+            const handleAnswer = (count) => {
+                if (isAnswered || !isTimerActive) return;
+                setIsAnswered(true);
+                if (currentQuestionIndex === questions.length - 1) {
+                    setIsTimerActive(false);
+                    setTimes(prev => ({...prev, [activeTeam]: timer }));
+                }
+            };
+
+            const nextQuestion = () => {
+                if (currentQuestionIndex === questions.length - 1) {
+                     setActiveTeam(null);
+                } else {
+                    setCurrentQuestionIndex(prev => prev + 1);
+                    setIsAnswered(false);
+                }
+            };
+            
+            useEffect(() => { setQuestions(shuffleArray(syllableCountingData)); }, []);
+
+            if (questions.length === 0) return null;
+            const currentQuestion = questions[currentQuestionIndex];
+
+            return (
+                <div className="w-full bg-white rounded-xl shadow-lg p-6 md:p-8 text-center">
+                    <h1 className="text-2xl font-bold text-gray-800 mb-2">Activity 7: Syllable Counting Race</h1>
+                    <p className="text-gray-600 mb-6">Start the timer and count the syllables for each word.</p>
+                    <TimerControls onStart={startForTeam} times={times} activeTeam={activeTeam} />
+                    <div className={`p-8 rounded-lg shadow-inner bg-gray-50 ${!activeTeam ? 'opacity-50 pointer-events-none' : ''}`}>
+                        <p className="text-4xl font-bold mb-6">{currentQuestion.word}</p>
+                        <div className="flex justify-center gap-4">
+                            {[1, 2, 3, '4+'].map(count => {
+                                let btnClass = "p-4 w-24 text-xl font-semibold rounded-lg shadow-sm transition-colors ";
+                                if (isAnswered) {
+                                    if (count === currentQuestion.count || (count === '4+' && currentQuestion.count >= 4)) {
+                                        btnClass += "bg-green-200 text-green-800 ring-2 ring-green-500";
+                                    } else {
+                                        btnClass += "bg-gray-100 text-gray-500";
+                                    }
+                                } else {
+                                    btnClass += "bg-white hover:bg-gray-100";
+                                }
+                                return <button key={count} onClick={() => handleAnswer(count)} disabled={isAnswered} className={btnClass}>{count}</button>
+                            })}
+                        </div>
+                    </div>
+                    <button onClick={nextQuestion} disabled={!isAnswered} className="mt-6 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg transition-all disabled:bg-gray-300">
+                        {currentQuestionIndex === questions.length - 1 ? 'Finish Round' : 'Next Question'}
+                    </button>
+                </div>
+            );
+        };
+        const StressPatternMatch = () => {
+            const [questions, setQuestions] = useState([]);
+            const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+            const [isAnswered, setIsAnswered] = useState(false);
+            
+            useEffect(() => { setQuestions(shuffleArray(stressPatternData)); }, []);
+
+            const handleSelect = (word) => { if(!isAnswered) setIsAnswered(true); };
+            const nextQuestion = () => { setCurrentQuestionIndex(prev => (prev + 1) % questions.length); setIsAnswered(false); };
+
+            if (questions.length === 0) return null;
+            const currentQuestion = questions[currentQuestionIndex];
+
+            return (
+                <div className="w-full bg-white rounded-xl shadow-lg p-6 md:p-8 text-center">
+                    <h1 className="text-2xl font-bold text-gray-800 mb-2">Activity 8: Stress Pattern Match</h1>
+                    <p className="text-gray-600 mb-6">Find the word that matches the stress pattern.</p>
+                    <div className="p-8 rounded-lg shadow-inner bg-gray-50">
+                        <p className="text-4xl font-bold mb-6 text-indigo-600">{currentQuestion.pattern.replace(/o/g, '●').replace(/O/g, '⬤')}</p>
+                        <div className="grid grid-cols-2 gap-4">
+                            {shuffleArray(currentQuestion.words).map(word => {
+                                let btnClass = "p-4 text-xl font-semibold rounded-lg shadow-sm transition-colors ";
+                                if(isAnswered) {
+                                    btnClass += word === currentQuestion.words[0] ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800';
+                                } else {
+                                    btnClass += 'bg-white hover:bg-gray-100';
+                                }
+                                return <button key={word} onClick={() => handleSelect(word)} disabled={isAnswered} className={btnClass}>{word}</button>
+                            })}
+                        </div>
+                    </div>
+                    <button onClick={nextQuestion} disabled={!isAnswered} className="mt-6 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg transition-all disabled:bg-gray-300">
+                        {currentQuestionIndex === questions.length - 1 ? 'Finish' : 'Next Question'}
+                    </button>
+                </div>
+            );
+        };
+        const IntonationGuessingGame = () => {
+            const [questions, setQuestions] = useState([]);
+            const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+            const [isAnswered, setIsAnswered] = useState(false);
+            
+            useEffect(() => { setQuestions(shuffleArray(intonationData)); }, []);
+            
+            const handleSelect = () => { if(!isAnswered) setIsAnswered(true); };
+            const nextQuestion = () => {
+                if (currentQuestionIndex === questions.length - 1) {
+                    // Do nothing, button will be disabled
+                } else {
+                    setCurrentQuestionIndex(prev => prev + 1);
+                    setIsAnswered(false);
+                }
+            };
+
+            if (questions.length === 0) return null;
+            const currentQuestion = questions[currentQuestionIndex];
+
+            return (
+                <div className="w-full bg-white rounded-xl shadow-lg p-6 md:p-8 text-center">
+                    <h1 className="text-2xl font-bold text-gray-800 mb-2">Activity 9: Intonation Guessing Game</h1>
+                    <p className="text-gray-600 mb-6">Listen to the sentence and decide if the intonation is rising or falling.</p>
+                    <div className="p-8 rounded-lg shadow-inner bg-gray-50">
+                        <p className="text-3xl font-bold mb-6">"{currentQuestion.sentence}"</p>
+                        <p className="text-gray-500 mb-4 italic">(Teacher reads the sentence with the appropriate intonation)</p>
+                        <div className="flex justify-center gap-8">
+                            <button onClick={() => handleSelect(true)} disabled={isAnswered} className={`p-4 text-4xl font-bold rounded-lg shadow-sm transition-colors ${isAnswered && currentQuestion.rising ? 'bg-green-200 ring-2 ring-green-500' : 'bg-white hover:bg-gray-100 disabled:bg-gray-200'}`}>↗</button>
+                            <button onClick={() => handleSelect(false)} disabled={isAnswered} className={`p-4 text-4xl font-bold rounded-lg shadow-sm transition-colors ${isAnswered && currentQuestion.falling ? 'bg-green-200 ring-2 ring-green-500' : 'bg-white hover:bg-gray-100 disabled:bg-gray-200'}`}>↘</button>
+                        </div>
+                         {isAnswered && (
+                            <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                                <p className="text-gray-700">This is a <strong>{currentQuestion.type}</strong>, which typically has <strong>{currentQuestion.rising ? 'rising' : 'falling'}</strong> intonation.</p>
+                            </div>
+                        )}
+                    </div>
+                     <button onClick={nextQuestion} disabled={!isAnswered || currentQuestionIndex === questions.length - 1} className="mt-6 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg transition-all disabled:bg-gray-300">
+                        {currentQuestionIndex === questions.length - 1 ? 'Finished' : 'Next Question'}
+                    </button>
+                </div>
+            );
+        };
 
         function App() {
             const [teams, setTeams] = useState([]);
@@ -483,6 +639,9 @@
                         <QuoteDecoder />
                         <OddOneOutGame />
                         <FindTheMistakeGame />
+                        <SyllableCountingGame />
+                        <StressPatternMatch />
+                        <IntonationGuessingGame />
                     </div>
                     <div id="right-sidebar">{useStickyLayout && teams[1] && <StickyTeamCard team={teams[1]} index={1} onScoreChange={handleScoreChange} />}</div>
                 </div>
