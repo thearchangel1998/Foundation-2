@@ -117,6 +117,7 @@
                 if (activeTeam && correctGuesses === totalCorrectNeeded) {
                     setIsTimerActive(false);
                     setTimes(prev => ({...prev, [activeTeam]: timer }));
+                    setActiveTeam(null);
                 }
             }, [guessed, activeTeam]);
 
