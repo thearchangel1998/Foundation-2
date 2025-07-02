@@ -35,7 +35,6 @@
         
         const shuffleArray = (array) => { let c = array.length; while (c > 0) { let i = Math.floor(Math.random() * c); c--; [array[c], array[i]] = [array[i], array[c]]; } return array; };
         
-        // --- Components ---
         const TeamCard = ({ team, index, onScoreChange }) => (
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 flex flex-col h-full">
                 <h3 className="font-bold text-lg mb-2 text-gray-700">Team {index + 1}</h3>
@@ -109,6 +108,7 @@
                 if (activeTeam && correctGuesses === totalCorrectNeeded) {
                     setIsTimerActive(false);
                     setTimes(prev => ({...prev, [activeTeam]: timer }));
+                    setActiveTeam(null);
                 }
             }, [guessed, activeTeam]);
 
@@ -138,7 +138,7 @@
                 <div className="w-full bg-white rounded-xl shadow-lg p-6 md:p-8 text-center">
                     <h1 className="text-2xl font-bold text-gray-800 mb-2">Activity 1: Vowel & Consonant Challenge</h1>
                     <p className="text-gray-600 mb-6">Select a category and start the timer for a team to find all the words.</p>
-                     <TimerControls onStart={(team) => startForTeam(team, team === 1 ? 'vowel' : 'consonant')} times={times} activeTeam={activeTeam} />
+                    <TimerControls onStart={(team) => startForTeam(team, team === 1 ? 'vowel' : 'consonant')} times={times} activeTeam={activeTeam} />
                     <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
                         {words.map(word => (<button key={word.word} onClick={() => handleWordClick(word)} className={`p-2 rounded-lg shadow-sm transition-all duration-300 ${getWordClass(word)}`}>{word.word}</button>))}
                     </div>
@@ -161,7 +161,7 @@
 
             const startRoundForTeam = (teamNumber) => { setWordState(shuffleArray(round.words).map(w => ({...w, status: 'unclicked'}))); setIsChecked(false); setTimer(0); setActiveTeam(teamNumber); setIsTimerActive(true); };
             const handleClick = (clickedWord) => { if(!isTimerActive || isChecked) return; setWordState(prev => prev.map(w => w.word === clickedWord.word ? {...w, status: w.correct ? 'correct' : 'incorrect'} : w)); };
-            const handleCheck = () => { setIsChecked(true); setIsTimerActive(false); setTimes(prev => ({...prev, [activeTeam]: timer })); };
+            const handleCheck = () => { setIsChecked(true); setIsTimerActive(false); setTimes(prev => ({...prev, [activeTeam]: timer })); setActiveTeam(null); };
             const nextRound = () => { setCurrentRoundIndex(prev => (prev + 1) % diphthongRoundsData.length); };
 
             useEffect(() => { setWordState(shuffleArray(round.words).map(w => ({...w, status: 'unclicked'}))); setIsChecked(false); setActiveTeam(null); setTimer(0); setIsTimerActive(false); }, [currentRoundIndex]);
